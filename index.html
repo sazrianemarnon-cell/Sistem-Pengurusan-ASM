@@ -1,0 +1,2341 @@
+```html
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Sistem ASM">
+    <title>SISTEM PENGURUSAN ASM — Dashboard Interaktif</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- jsPDF & AutoTable untuk Eksport Laporan PDF Rasmi -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+
+    <!-- Konfigurasi Tailwind & Gaya Tersuai -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        /* Skrol halus untuk bar sisi dan jadual */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        .fade-in {
+            animation: fadeIn 0.25s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased selection:bg-indigo-100 selection:text-indigo-800">
+
+    <!-- ===================================================================== -->
+    <!-- SKRIN LOG MASUK (GOOGLE OAUTH SIMULASI KHUSUS GURU & PENTADBIR)       -->
+    <!-- ===================================================================== -->
+    <div id="login-screen" class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800">
+        <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden fade-in">
+            <div class="p-8 text-center">
+                <!-- Logo Sistem -->
+                <div class="mx-auto w-16 h-16 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center mb-4 shadow-inner">
+                    <i data-lucide="book-open-check" class="w-9 h-9"></i>
+                </div>
+                <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 mb-2">
+                    PWA • Multi-Gereja
+                </span>
+                <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">SISTEM PENGURUSAN ASM</h1>
+                <p class="text-sm text-slate-500 mt-1">Portal Rasmi Guru & Pentadbir Anak Sekolah Minggu</p>
+
+                <!-- Pilihan Peranan Akaun Google (Simulasi OAuth) -->
+                <div class="mt-6 text-left">
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
+                        Pilih Akaun Google Berdaftar (Demo OAuth)
+                    </label>
+                    <div id="oauth-account-list" class="space-y-2.5">
+                        <!-- Dijana oleh JS -->
+                    </div>
+                </div>
+
+                <!-- Butang Log Masuk Google -->
+                <button onclick="performGoogleLogin()" class="mt-6 w-full flex items-center justify-center gap-3 bg-slate-900 hover:bg-slate-800 active:scale-[0.99] text-white font-semibold py-3.5 px-4 rounded-2xl shadow-lg transition-all">
+                    <!-- Ikon Google SVG -->
+                    <svg class="w-5 h-5" viewBox="0 0 24 24">
+                        <path fill="#EA4335" d="M12 5.04c1.94 0 3.68.67 5.05 1.98l3.77-3.77C18.54 1.14 15.54 0 12 0 7.31 0 3.25 2.69 1.28 6.61l4.4 3.41C6.72 7.12 9.14 5.04 12 5.04z"/>
+                        <path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58v3h3.86c2.26-2.09 3.56-5.17 3.56-8.82z"/>
+                        <path fill="#FBBC05" d="M5.68 14.02c-.24-.72-.38-1.49-.38-2.29s.14-1.57.38-2.29V6.03H1.28C.47 7.65 0 9.47 0 11.73s.47 4.08 1.28 5.7l4.4-3.41z"/>
+                        <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.86-3c-1.08.72-2.45 1.16-4.07 1.16-3.13 0-5.78-2.11-6.73-4.96l-4.4 3.41C3.25 21.31 7.31 24 12 24z"/>
+                    </svg>
+                    <span>Log Masuk dengan Google</span>
+                </button>
+
+                <p class="mt-4 text-xs text-slate-400">
+                    Akses disahkan melalui Google OAuth 2.0 khusus untuk guru & pentadbir gereja yang diluluskan.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- KERANGKA UTAMA DASHBOARD (SELEPAS LOG MASUK)                          -->
+    <!-- ===================================================================== -->
+    <div id="app-shell" class="hidden min-h-screen flex flex-col lg:flex-row">
+
+        <!-- Overlay Mudah Alih untuk Sidebar -->
+        <div id="mobile-overlay" onclick="toggleMobileSidebar(false)" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-40 hidden lg:hidden"></div>
+
+        <!-- BAR SISI NAVIGASI (SIDEBAR) -->
+        <aside id="sidebar" class="fixed lg:sticky top-0 left-0 z-50 h-screen w-72 bg-white border-r border-slate-200 flex flex-col transform -translate-x-full lg:translate-x-0 transition-transform duration-200 ease-in-out">
+            <!-- Header Sidebar -->
+            <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-200">
+                        <i data-lucide="book-open-check" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h2 class="font-extrabold text-slate-900 leading-tight text-base">SISTEM ASM</h2>
+                        <span class="text-[11px] font-medium text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">v2.5 PWA</span>
+                    </div>
+                </div>
+                <button onclick="toggleMobileSidebar(false)" class="lg:hidden p-2 rounded-xl text-slate-400 hover:bg-slate-100">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Penukar Multi-Gereja -->
+            <div class="p-4 border-b border-slate-100 bg-slate-50/70">
+                <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center gap-1">
+                    <i data-lucide="church" class="w-3.5 h-3.5"></i> Gereja Aktif
+                </label>
+                <select id="church-selector" onchange="switchChurch(this.value)" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <!-- Dijana oleh JS -->
+                </select>
+            </div>
+
+            <!-- Menu Navigasi -->
+            <nav id="sidebar-nav" class="flex-1 overflow-y-auto p-3 space-y-1">
+                <!-- Dijana oleh JS -->
+            </nav>
+
+            <!-- Status PWA & Mod Luar Talian -->
+            <div class="p-3 border-t border-slate-100 space-y-2 bg-slate-50/60">
+                <button onclick="openPwaModal()" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold transition">
+                    <span class="flex items-center gap-2">
+                        <i data-lucide="smartphone" class="w-4 h-4"></i> Pasang Aplikasi (PWA)
+                    </span>
+                    <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                </button>
+                <div class="flex items-center justify-between px-3 py-2 rounded-xl bg-white border border-slate-200">
+                    <span class="text-xs font-medium text-slate-600 flex items-center gap-1.5">
+                        <span id="offline-dot" class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                        <span id="offline-label">Mod Dalam Talian</span>
+                    </span>
+                    <button onclick="toggleOfflineSimulation()" class="text-[11px] font-semibold text-indigo-600 hover:underline">
+                        Tukar
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- KANDUNGAN UTAMA -->
+        <div class="flex-1 flex flex-col min-w-0">
+            <!-- Banner Mod Luar Talian (Offline PWA) -->
+            <div id="offline-banner" class="hidden bg-amber-500 text-white text-xs font-semibold px-4 py-2 text-center flex items-center justify-center gap-2">
+                <i data-lucide="wifi-off" class="w-4 h-4"></i>
+                <span>Mod Luar Talian (Offline PWA) aktif — Data dicache secara tempatan dan akan disegerakkan apabila sambungan pulih.</span>
+            </div>
+
+            <!-- Bar Atas (Topbar) -->
+            <header class="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-200 px-4 lg:px-8 py-3.5 flex items-center justify-between gap-4">
+                <div class="flex items-center gap-3 min-w-0">
+                    <button onclick="toggleMobileSidebar(true)" class="lg:hidden p-2.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200">
+                        <i data-lucide="menu" class="w-5 h-5"></i>
+                    </button>
+                    <div class="truncate">
+                        <h1 id="page-title" class="text-lg lg:text-xl font-bold text-slate-900 truncate">Ringkasan Utama</h1>
+                        <p id="page-subtitle" class="text-xs text-slate-500 truncate">Gambaran keseluruhan operasi ASM gereja anda</p>
+                    </div>
+                </div>
+
+                <!-- Profil Pengguna & Tindakan Pantas -->
+                <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+                    <button onclick="openAccountModal()" class="flex items-center gap-2.5 pl-2 pr-3 py-1.5 rounded-2xl border border-slate-200 hover:bg-slate-50 transition">
+                        <div id="user-avatar" class="w-8 h-8 rounded-xl bg-indigo-600 text-white font-bold text-xs flex items-center justify-center">
+                            AP
+                        </div>
+                        <div class="hidden sm:block text-left">
+                            <div id="user-name" class="text-xs font-bold text-slate-800 leading-tight">Cikgu Grace</div>
+                            <div id="user-role" class="text-[11px] text-slate-500 leading-tight">Pentadbir Pusat</div>
+                        </div>
+                        <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Kontena Halaman Dinamik -->
+            <main id="main-content" class="flex-1 p-4 lg:p-8 max-w-7xl w-full mx-auto fade-in">
+                <!-- Kandungan seksyen aktif dirender oleh JS -->
+            </main>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODAL SERBAGUNA & NOTIFIKASI TOAST (TIADA alert() / confirm())        -->
+    <!-- ===================================================================== -->
+    <div id="modal-backdrop" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-4 overflow-y-auto">
+        <div id="modal-box" class="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden my-auto fade-in">
+            <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                <h3 id="modal-title" class="text-lg font-bold text-slate-900">Tajuk Modal</h3>
+                <button onclick="closeModal()" class="p-2 rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div id="modal-body" class="p-6 max-h-[75vh] overflow-y-auto">
+                <!-- Kandungan modal -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Bekas Toast Notifikasi -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-[60] flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+    <!-- ===================================================================== -->
+    <!-- LOGIK APLIKASI JAVASCRIPT                                             -->
+    <!-- ===================================================================== -->
+    <script>
+        /* ===================================================================
+           1. DATA AWAL & KEADAAN APLIKASI (IN-MEMORY STATE)
+        =================================================================== */
+        const state = {
+            currentUser: null,
+            selectedLoginIndex: 0,
+            activeChurchId: 'church-pusat',
+            activeSection: 'dashboard',
+            isOfflineSimulated: false,
+            selectedAttendanceDate: '2026-11-15',
+            selectedAttendanceClassId: 'all',
+            selectedStudentClassFilter: 'all',
+            studentSearch: '',
+            announcementTab: 'induk', // 'induk' | 'dalaman'
+            songSearch: '',
+            abmFilter: 'Semua',
+
+            // Akaun Google Demo (OAuth)
+            oauthAccounts: [
+                {
+                    id: 'u-1',
+                    name: 'Ps. Daniel Liew',
+                    email: 'daniel.liew@gerejapusat.org',
+                    role: 'Pentadbir Pusat',
+                    initials: 'DL',
+                    churchId: 'church-pusat',
+                    avatarColor: 'bg-indigo-600'
+                },
+                {
+                    id: 'u-2',
+                    name: 'Cikgu Grace Tan',
+                    email: 'grace.tan@asmcawangan.org',
+                    role: 'Pentadbir Gereja',
+                    initials: 'GT',
+                    churchId: 'church-kk',
+                    avatarColor: 'bg-emerald-600'
+                },
+                {
+                    id: 'u-3',
+                    name: 'Cikgu Samuel Wong',
+                    email: 'samuel.wong@gmail.com',
+                    role: 'Guru Bertugas',
+                    initials: 'SW',
+                    churchId: 'church-pusat',
+                    avatarColor: 'bg-amber-600'
+                }
+            ],
+
+            // Multi-Gereja
+            churches: [
+                { id: 'church-pusat', name: 'Gereja Pusat (Induk - KL)', code: 'GP-KL', isCentral: true },
+                { id: 'church-kk', name: 'Gereja Cawangan Kota Kinabalu', code: 'GC-KK', isCentral: false },
+                { id: 'church-kch', name: 'Gereja Cawangan Kuching', code: 'GC-KCH', isCentral: false }
+            ],
+
+            // Kelas Gaya Google Classroom (Gabungan & Pecahan Umur Tanpa Had)
+            classes: [
+                {
+                    id: 'cls-1',
+                    churchId: 'church-pusat',
+                    name: 'Kelas Prasekolah (Bintang Kecil)',
+                    category: 'Prasekolah (4-6 Tahun)',
+                    type: 'pecahan',
+                    code: 'ASM46A',
+                    bannerColor: 'from-pink-500 to-rose-500',
+                    teachers: [
+                        { id: 't-1', name: 'Cikgu Esther Lim', email: 'esther@gmail.com', shift: 'Nov 2026' },
+                        { id: 't-2', name: 'Cikgu Hannah Chia', email: 'hannah@gmail.com', shift: 'Nov 2026' }
+                    ]
+                },
+                {
+                    id: 'cls-2',
+                    churchId: 'church-pusat',
+                    name: 'Kelas Rendah Bawah (Tunas Iman)',
+                    category: 'Rendah Bawah (7-9 Tahun)',
+                    type: 'pecahan',
+                    code: 'ASM79B',
+                    bannerColor: 'from-indigo-500 to-blue-600',
+                    teachers: [
+                        { id: 't-3', name: 'Cikgu Samuel Wong', email: 'samuel.wong@gmail.com', shift: 'Nov - Dis 2026' }
+                    ]
+                },
+                {
+                    id: 'cls-3',
+                    churchId: 'church-pusat',
+                    name: 'Kelas Rendah Atas (Pejuang Muda)',
+                    category: 'Rendah Atas (10-12 Tahun)',
+                    type: 'pecahan',
+                    code: 'ASM10C',
+                    bannerColor: 'from-emerald-500 to-teal-600',
+                    teachers: [
+                        { id: 't-4', name: 'Cikgu Joshua Lau', email: 'joshua@gmail.com', shift: 'Nov 2026' }
+                    ]
+                },
+                {
+                    id: 'cls-4',
+                    churchId: 'church-kk',
+                    name: 'Kelas Gabungan ASM KK',
+                    category: 'Kelas Gabungan (Semua Umur)',
+                    type: 'gabungan',
+                    code: 'KKALL1',
+                    bannerColor: 'from-amber-500 to-orange-600',
+                    teachers: [
+                        { id: 't-5', name: 'Cikgu Grace Tan', email: 'grace.tan@asmcawangan.org', shift: 'Sepanjang Tahun' }
+                    ]
+                },
+                {
+                    id: 'cls-5',
+                    churchId: 'church-kch',
+                    name: 'Kelas Gabungan ASM Kuching',
+                    category: 'Kelas Gabungan (Semua Umur)',
+                    type: 'gabungan',
+                    code: 'KCH99Z',
+                    bannerColor: 'from-violet-500 to-purple-600',
+                    teachers: [
+                        { id: 't-6', name: 'Cikgu Rachel Bong', email: 'rachel@gmail.com', shift: 'Nov 2026' }
+                    ]
+                }
+            ],
+
+            // Senarai Anak ASM
+            students: [
+                { id: 's-1', churchId: 'church-pusat', classId: 'cls-1', name: 'Aiden Gabriel', age: 5, parentName: 'En. Mark Gabriel', parentPhone: '012-3456781', points: 45 },
+                { id: 's-2', churchId: 'church-pusat', classId: 'cls-1', name: 'Chloe Mei Ling', age: 6, parentName: 'Pn. Sharon Tan', parentPhone: '012-3456782', points: 60 },
+                { id: 's-3', churchId: 'church-pusat', classId: 'cls-2', name: 'Elijah Anak Banting', age: 8, parentName: 'En. Banting', parentPhone: '013-8891234', points: 85 },
+                { id: 's-4', churchId: 'church-pusat', classId: 'cls-2', name: 'Naomi Ruth', age: 9, parentName: 'Pn. Rebecca', parentPhone: '019-2214455', points: 70 },
+                { id: 's-5', churchId: 'church-pusat', classId: 'cls-3', name: 'Caleb Ezekiel', age: 11, parentName: 'En. Peter', parentPhone: '016-7781122', points: 95 },
+                { id: 's-6', churchId: 'church-pusat', classId: 'cls-3', name: 'Abigail Joy', age: 12, parentName: 'Pn. Martha', parentPhone: '017-5543322', points: 80 },
+                { id: 's-7', churchId: 'church-kk', classId: 'cls-4', name: 'Micah Dusun', age: 7, parentName: 'En. Jelius', parentPhone: '014-6678901', points: 55 },
+                { id: 's-8', churchId: 'church-kk', classId: 'cls-4', name: 'Sarah Evelyn', age: 10, parentName: 'Pn. Flora', parentPhone: '014-6678902', points: 75 },
+                { id: 's-9', churchId: 'church-kch', classId: 'cls-5', name: 'Isaac Bujang', age: 8, parentName: 'En. Bujang', parentPhone: '011-2233445', points: 50 }
+            ],
+
+            // Rekod Kehadiran: { 'YYYY-MM-DD': { studentId: 'hadir' | 'tidak' } }
+            attendance: {
+                '2026-11-15': {
+                    's-1': 'hadir', 's-2': 'hadir', 's-3': 'hadir', 's-4': 'tidak', 's-5': 'hadir', 's-6': 'hadir',
+                    's-7': 'hadir', 's-8': 'hadir', 's-9': 'hadir'
+                },
+                '2026-11-08': {
+                    's-1': 'hadir', 's-2': 'tidak', 's-3': 'hadir', 's-4': 'hadir', 's-5': 'hadir', 's-6': 'tidak',
+                    's-7': 'hadir', 's-8': 'tidak', 's-9': 'hadir'
+                },
+                '2026-11-01': {
+                    's-1': 'hadir', 's-2': 'hadir', 's-3': 'hadir', 's-4': 'hadir', 's-5': 'hadir', 's-6': 'hadir',
+                    's-7': 'tidak', 's-8': 'hadir', 's-9': 'hadir'
+                }
+            },
+
+            // Log Merit & Demerit
+            meritLogs: [
+                { id: 'm-1', studentId: 's-5', churchId: 'church-pusat', type: 'merit', points: 15, category: 'Hafalan', reason: 'Berjaya menghafal Mazmur 119:105 dengan lancar', date: '2026-11-15', by: 'Cikgu Joshua Lau' },
+                { id: 'm-2', studentId: 's-3', churchId: 'church-pusat', type: 'merit', points: 10, category: 'Sahsiah', reason: 'Membantu menyusun kerusi selepas sesi P&W', date: '2026-11-15', by: 'Cikgu Samuel Wong' },
+                { id: 'm-3', studentId: 's-4', churchId: 'church-pusat', type: 'demerit', points: -5, category: 'Disiplin', reason: 'Bercakap kuat semasa sesi doa berlangsung', date: '2026-11-08', by: 'Cikgu Samuel Wong' },
+                { id: 'm-4', studentId: 's-8', churchId: 'church-kk', type: 'merit', points: 10, category: 'Hafalan', reason: 'Hafalan ayat mingguan tepat', date: '2026-11-15', by: 'Cikgu Grace Tan' }
+            ],
+
+            // Papan Pengumuman Dua Tahap
+            announcements: [
+                {
+                    id: 'ann-1',
+                    level: 'induk',
+                    churchId: 'all',
+                    title: 'Tema Kurikulum ASM Disember 2026: Terang Dunia',
+                    content: 'Semua gereja cawangan diminta menggunakan silibus rasmi Krismas "Terang Dunia" bermula Ahad pertama Disember. Bahan ABM telah dimuat naik di Bank ABM.',
+                    author: 'Ps. Daniel Liew (Gereja Pusat)',
+                    date: '18 Nov 2026',
+                    pinned: true
+                },
+                {
+                    id: 'ann-2',
+                    level: 'induk',
+                    churchId: 'all',
+                    title: 'Pendaftaran Kem Tahunan ASM Kebangsaan Dibuka',
+                    content: 'Sila kemaskini senarai nama anak berumur 7-12 tahun yang berminat menyertai Kem ASM sebelum 30 November 2026.',
+                    author: 'Sekretariat ASM Pusat',
+                    date: '12 Nov 2026',
+                    pinned: false
+                },
+                {
+                    id: 'ann-3',
+                    level: 'dalaman',
+                    churchId: 'church-pusat',
+                    title: 'Mesyuarat Ringkas Guru Bertugas Ahad Ini',
+                    content: 'Mohon semua guru berkumpul di Bilik Persediaan pada jam 8:15 pagi untuk doa pembukaan dan semakan peralatan kraf.',
+                    author: 'Cikgu Samuel Wong',
+                    date: '19 Nov 2026',
+                    pinned: true
+                },
+                {
+                    id: 'ann-4',
+                    level: 'dalaman',
+                    churchId: 'church-kk',
+                    title: 'Latihan Persembahan Koil Anak-Anak KK',
+                    content: 'Latihan lagu Krismas akan diadakan selama 20 minit selepas kelas ASM tamat pada Ahad ini.',
+                    author: 'Cikgu Grace Tan',
+                    date: '17 Nov 2026',
+                    pinned: true
+                }
+            ],
+
+            // Ayat Hafalan Mingguan
+            memoryVerse: {
+                week: 'Ahad, 22 November 2026',
+                reference: 'Mazmur 119:105 (BM)',
+                text: '“Firman-Mu itu pelita bagi kakiku dan terang bagi jalanku.”',
+                tip: 'Gunakan gerakan tangan seperti memegang lampu suluh sambil melangkah kecil untuk membantu anak Prasekolah menghafal.'
+            },
+
+            // Skrip Pemimpin Mingguan
+            leaderScript: {
+                theme: 'Firman Tuhan Menerangi Hidupku',
+                date: '22 November 2026',
+                steps: [
+                    { id: 'st-1', time: '09:00 - 09:10', title: 'Sambutan & Doa Pembukaan', detail: 'Sambut anak dengan mesra di pintu. Doa ringkas: "Tuhan Yesus, terima kasih kerana membawa kami ke Sekolah Minggu hari ini. Buka hati kami untuk belajar firman-Mu. Amin."', done: false },
+                    { id: 'st-2', time: '09:10 - 09:25', title: 'Sesi Puji-Pujian (P&W)', detail: 'Nyanyikan 2 lagu rancak ("Baca Kitab Suci", "Yesus Pokok") dan 1 lagu penyembahan ("Bapa Engkau Sungguh Baik"). Galakkan semua anak ikut gerakan.', done: false },
+                    { id: 'st-3', time: '09:25 - 09:45', title: 'Cerita Alkitab & Ayat Hafalan', detail: 'Sampaikan kisah perjalanan di tempat gelap menggunakan lampu suluh sebagai alat bantu visual. Ulang ayat hafalan Mazmur 119:105 sebanyak 3 kali.', done: false },
+                    { id: 'st-4', time: '09:45 - 10:10', title: 'Aktiviti Kraf / Lembaran Kerja', detail: 'Edarkan kertas kraf "Pelita Firman" dari Bank ABM. Guru pembantu bantu menggunting bagi kelas Prasekolah.', done: false },
+                    { id: 'st-5', time: '10:10 - 10:20', title: 'Pemberian Merit, Persembahan & Doa Penutup', detail: 'Rekod mata merit bagi anak yang menghafal ayat. Kutip persembahan sambil menyanyi, kemudian tutup dengan Doa Bapa Kami.', done: false }
+                ]
+            },
+
+            // Bank Lagu Puji-Pujian (P&W)
+            songs: [
+                {
+                    id: 'song-1',
+                    title: 'Baca Kitab Suci, Doa Tiap Hari',
+                    tempo: 'Rancak / Gerakan',
+                    videoUrl: 'https://www.youtube.com/results?search_query=Baca+Kitab+Suci+Doa+Tiap+Hari+sekolah+minggu',
+                    lyrics: `Baca Kitab Suci, doa tiap hari\nDoa tiap hari, doa tiap hari\nBaca Kitab Suci, doa tiap hari\nKalau mahu tumbuh!\n\nKalau mahu tumbuh, kalau mahu tumbuh\nHaleluya!\nBaca Kitab Suci, doa tiap hari\nKalau mahu tumbuh!`
+                },
+                {
+                    id: 'song-2',
+                    title: 'Yesus Pokok dan Kitalah Carangnya',
+                    tempo: 'Rancak / Gerakan',
+                    videoUrl: 'https://www.youtube.com/results?search_query=Yesus+Pokok+dan+Kitalah+Carangnya+sekolah+minggu',
+                    lyrics: `Yesus pokok dan kitalah carangnya\nTinggallah di dalam-Nya (3x)\nPastilah kau akan berbuah!\n\nYesus cintaku, ku cinta kau\nYesus cinta semua!\nYesus cintaku, ku cinta kau\nYesus cinta semua!`
+                },
+                {
+                    id: 'song-3',
+                    title: 'Bapa Engkau Sungguh Baik',
+                    tempo: 'Penyembahan / Perlahan',
+                    videoUrl: 'https://www.youtube.com/results?search_query=Bapa+Engkau+Sungguh+Baik+kanak+kanak',
+                    lyrics: `Bapa, Engkau sungguh baik\nKasih-Mu melimpah di hidupku\nBapa, ku berterima kasih\nBerkat-Mu hari ini yang Kau sediakan bagiku\n\nKu naikkan syukurku buat hari yang Kau bri\nTak habis-habisnya kasih dan rahmat-Mu\nSelalu baru dan tak pernah terlambat pertolongan-Mu\nBesar setia-Mu di sepanjang hidupku.`
+                }
+            ],
+
+            // Kalendar Tahunan & Acara Khas
+            events: [
+                { id: 'ev-1', date: '2026-12-06', title: 'Pelancaran Bulan Krismas ASM', category: 'Sambutan', location: 'Dewan Utama', notes: 'Pakaian bertema merah/hijau.' },
+                { id: 'ev-2', date: '2026-12-19', title: 'Kem Sehari & Sukaneka ASM 2026', category: 'Kem & Sukaneka', location: 'Padang & Dewan Gereja', notes: 'Terbuka untuk semua anak ASM & ibu bapa.' },
+                { id: 'ev-3', date: '2026-12-25', title: 'Persembahan Hari Krismas ASM', category: 'Sambutan', location: 'Ibadah Gabungan', notes: 'Anak berkumpul jam 8:30 pagi.' },
+                { id: 'ev-4', date: '2027-01-10', title: 'Hari Pendaftaran & Naik Kelas 2027', category: 'Takwim', location: 'Semua Kelas ASM', notes: 'Sesi suaikenal guru dan murid baharu.' }
+            ],
+
+            // Bank Bahan Bantu Mengajar / ABM (Premium)
+            abmFiles: [
+                { id: 'abm-1', title: 'Lembaran Aktiviti: Pelita Firman (Mazmur 119:105)', category: 'Lembaran Aktiviti', ageGroup: 'Rendah Bawah & Atas', format: 'PDF', size: '1.8 MB', premium: true, downloads: 42 },
+                { id: 'abm-2', title: 'Templat Kraf Tangan: Bahtera Nuh 3D', category: 'Kraf Tangan', ageGroup: 'Prasekolah', format: 'PDF', size: '3.2 MB', premium: true, downloads: 67 },
+                { id: 'abm-3', title: 'Kad Imbasan Visual: 10 Perintah Allah', category: 'Visual Pengajaran', ageGroup: 'Semua Umur', format: 'PDF', size: '4.5 MB', premium: true, downloads: 89 },
+                { id: 'abm-4', title: 'Buku Mewarna Kisah Kelahiran Yesus', category: 'Lembaran Aktiviti', ageGroup: 'Prasekolah', format: 'PDF', size: '2.1 MB', premium: false, downloads: 115 }
+            ]
+        };
+
+        /* ===================================================================
+           2. DEFINISI MENU NAVIGASI
+        =================================================================== */
+        const navItems = [
+            { id: 'dashboard', label: 'Ringkasan Utama', icon: 'layout-dashboard', subtitle: 'Statistik & akses pantas harian' },
+            { id: 'classes', label: 'Pengurusan Kelas', icon: 'graduation-cap', subtitle: 'Gaya Google Classroom, Kod Kelas & Guru' },
+            { id: 'students', label: 'Senarai Anak ASM', icon: 'users', subtitle: 'Pendaftaran & rekod murid mengikut kelas' },
+            { id: 'attendance', label: 'Kehadiran & Laporan', icon: 'calendar-check', subtitle: 'Kehadiran Ahad & eksport Excel / PDF' },
+            { id: 'merit', label: 'Merit & Demerit', icon: 'award', subtitle: 'Pemantauan sahsiah, hafalan & disiplin' },
+            { id: 'announcements', label: 'Pengumuman & Skrip', icon: 'megaphone', subtitle: 'Hebahan 2 tahap, Ayat Hafalan & Skrip Pemimpin' },
+            { id: 'songs', label: 'Bank Lagu P&W', icon: 'music', subtitle: 'Koleksi lirik & pautan video gerakan' },
+            { id: 'calendar', label: 'Kalendar Tahunan', icon: 'calendar-days', subtitle: 'Takwim kem, sukaneka & acara khas' },
+            { id: 'abm', label: 'Bank ABM (Premium)', icon: 'folder-kanban', subtitle: 'Lembaran aktiviti, kraf & visual PDF' }
+        ];
+
+        /* ===================================================================
+           3. INISIALISASI PWA & LOG MASUK
+        =================================================================== */
+        function initPWA() {
+            // Jana Web App Manifest secara dinamik untuk sokongan Add to Home Screen
+            try {
+                const manifest = {
+                    name: 'SISTEM PENGURUSAN ASM',
+                    short_name: 'Sistem ASM',
+                    description: 'Dashboard Pengurusan Anak Sekolah Minggu Multi-Gereja',
+                    start_url: '.',
+                    display: 'standalone',
+                    background_color: '#f8fafc',
+                    theme_color: '#4f46e5',
+                    icons: [
+                        {
+                            src: 'https://placehold.co/192x192/4f46e5/ffffff?text=ASM',
+                            sizes: '192x192',
+                            type: 'image/png'
+                        },
+                        {
+                            src: 'https://placehold.co/512x512/4f46e5/ffffff?text=ASM',
+                            sizes: '512x512',
+                            type: 'image/png'
+                        }
+                    ]
+                };
+                const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+                const manifestURL = URL.createObjectURL(blob);
+                const link = document.createElement('link');
+                link.rel = 'manifest';
+                link.href = manifestURL;
+                document.head.appendChild(link);
+            } catch (err) {
+                console.warn('Manifest PWA tidak dapat dijana:', err);
+            }
+
+            // Pantau status rangkaian sebenar
+            window.addEventListener('offline', () => {
+                state.isOfflineSimulated = true;
+                updateOfflineUI();
+            });
+            window.addEventListener('online', () => {
+                state.isOfflineSimulated = false;
+                updateOfflineUI();
+            });
+        }
+
+        function renderLoginAccounts() {
+            const container = document.getElementById('oauth-account-list');
+            container.innerHTML = state.oauthAccounts.map((acc, idx) => {
+                const selected = idx === state.selectedLoginIndex;
+                return `
+                    <button type="button" onclick="selectLoginAccount(${idx})"
+                        class="w-full flex items-center gap-3 p-3 rounded-2xl border-2 text-left transition-all ${selected ? 'border-indigo-600 bg-indigo-50/70 shadow-xs' : 'border-slate-200 hover:border-slate-300 bg-white'}">
+                        <div class="w-10 h-10 rounded-xl ${acc.avatarColor} text-white font-bold text-sm flex items-center justify-center shrink-0">
+                            ${acc.initials}
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <div class="font-bold text-sm text-slate-900 truncate">${acc.name}</div>
+                            <div class="text-xs text-slate-500 truncate">${acc.email}</div>
+                        </div>
+                        <span class="text-[10px] font-bold px-2.5 py-1 rounded-full ${selected ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600'} shrink-0">
+                            ${acc.role}
+                        </span>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function selectLoginAccount(idx) {
+            state.selectedLoginIndex = idx;
+            renderLoginAccounts();
+        }
+
+        function performGoogleLogin() {
+            const acc = state.oauthAccounts[state.selectedLoginIndex];
+            state.currentUser = acc;
+            state.activeChurchId = acc.churchId;
+
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('app-shell').classList.remove('hidden');
+
+            updateHeaderProfile();
+            renderChurchSelector();
+            renderSidebarNav();
+            navigateTo('dashboard');
+            showToast(`Selamat datang, ${acc.name}! (${acc.role})`, 'success');
+        }
+
+        function logout() {
+            closeModal();
+            state.currentUser = null;
+            document.getElementById('app-shell').classList.add('hidden');
+            document.getElementById('login-screen').classList.remove('hidden');
+            showToast('Anda telah log keluar dengan selamat.', 'info');
+        }
+
+        /* ===================================================================
+           4. FUNGSI PEMBANTU (HELPERS)
+        =================================================================== */
+        function getActiveChurch() {
+            return state.churches.find(c => c.id === state.activeChurchId) || state.churches[0];
+        }
+
+        function getChurchClasses() {
+            return state.classes.filter(c => c.churchId === state.activeChurchId);
+        }
+
+        function getChurchStudents() {
+            return state.students.filter(s => s.churchId === state.activeChurchId);
+        }
+
+        function getClassById(id) {
+            return state.classes.find(c => c.id === id);
+        }
+
+        function generateClassCode() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            let code = '';
+            for (let i = 0; i < 6; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
+            return code;
+        }
+
+        function copyTextToClipboard(text, label = 'Teks') {
+            // Menggunakan execCommand('copy') supaya serasi dalam iframe
+            const tempInput = document.createElement('textarea');
+            tempInput.value = text;
+            tempInput.style.position = 'fixed';
+            tempInput.style.opacity = '0';
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            try {
+                document.execCommand('copy');
+                showToast(`${label} berjaya disalin: ${text}`, 'success');
+            } catch (e) {
+                showToast('Gagal menyalin secara automatik.', 'error');
+            }
+            document.body.removeChild(tempInput);
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const colors = {
+                success: 'bg-emerald-600 text-white',
+                error: 'bg-rose-600 text-white',
+                info: 'bg-slate-800 text-white',
+                warning: 'bg-amber-500 text-white'
+            };
+            const icons = {
+                success: 'check-circle-2',
+                error: 'alert-circle',
+                info: 'info',
+                warning: 'alert-triangle'
+            };
+            const toast = document.createElement('div');
+            toast.className = `pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl text-sm font-medium fade-in ${colors[type] || colors.info}`;
+            toast.innerHTML = `
+                <i data-lucide="${icons[type] || 'info'}" class="w-4 h-4 shrink-0"></i>
+                <span class="flex-1">${message}</span>
+            `;
+            container.appendChild(toast);
+            lucide.createIcons({ nodes: [toast] });
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s';
+                setTimeout(() => toast.remove(), 300);
+            }, 3200);
+        }
+
+        function openModal(title, bodyHtml) {
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-body').innerHTML = bodyHtml;
+            const backdrop = document.getElementById('modal-backdrop');
+            backdrop.classList.remove('hidden');
+            backdrop.classList.add('flex');
+            lucide.createIcons();
+        }
+
+        function closeModal() {
+            const backdrop = document.getElementById('modal-backdrop');
+            backdrop.classList.add('hidden');
+            backdrop.classList.remove('flex');
+        }
+
+        function toggleMobileSidebar(show) {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobile-overlay');
+            if (show) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+            }
+        }
+
+        function toggleOfflineSimulation() {
+            state.isOfflineSimulated = !state.isOfflineSimulated;
+            updateOfflineUI();
+            showToast(state.isOfflineSimulated ? 'Mod Luar Talian (Offline PWA) diaktifkan.' : 'Sambungan Dalam Talian dipulihkan.', state.isOfflineSimulated ? 'warning' : 'success');
+        }
+
+        function updateOfflineUI() {
+            const banner = document.getElementById('offline-banner');
+            const dot = document.getElementById('offline-dot');
+            const label = document.getElementById('offline-label');
+            if (state.isOfflineSimulated) {
+                banner.classList.remove('hidden');
+                dot.className = 'w-2 h-2 rounded-full bg-amber-500 animate-pulse';
+                label.textContent = 'Mod Luar Talian';
+            } else {
+                banner.classList.add('hidden');
+                dot.className = 'w-2 h-2 rounded-full bg-emerald-500';
+                label.textContent = 'Mod Dalam Talian';
+            }
+        }
+
+        function updateHeaderProfile() {
+            if (!state.currentUser) return;
+            document.getElementById('user-avatar').textContent = state.currentUser.initials;
+            document.getElementById('user-avatar').className = `w-8 h-8 rounded-xl ${state.currentUser.avatarColor} text-white font-bold text-xs flex items-center justify-center`;
+            document.getElementById('user-name').textContent = state.currentUser.name;
+            document.getElementById('user-role').textContent = state.currentUser.role;
+        }
+
+        function renderChurchSelector() {
+            const select = document.getElementById('church-selector');
+            select.innerHTML = state.churches.map(c =>
+                `<option value="${c.id}" ${c.id === state.activeChurchId ? 'selected' : ''}>${c.name}</option>`
+            ).join('');
+        }
+
+        function switchChurch(churchId) {
+            state.activeChurchId = churchId;
+            state.selectedAttendanceClassId = 'all';
+            state.selectedStudentClassFilter = 'all';
+            renderCurrentSection();
+            showToast(`Bertukar ke ${getActiveChurch().name}`, 'info');
+        }
+
+        function renderSidebarNav() {
+            const nav = document.getElementById('sidebar-nav');
+            nav.innerHTML = navItems.map(item => {
+                const active = item.id === state.activeSection;
+                return `
+                    <button onclick="navigateTo('${item.id}')"
+                        class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all ${active ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'}">
+                        <i data-lucide="${item.icon}" class="w-4 h-4 shrink-0"></i>
+                        <span class="truncate">${item.label}</span>
+                    </button>
+                `;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        function navigateTo(sectionId) {
+            state.activeSection = sectionId;
+            const navObj = navItems.find(n => n.id === sectionId);
+            document.getElementById('page-title').textContent = navObj ? navObj.label : 'Dashboard';
+            document.getElementById('page-subtitle').textContent = `${getActiveChurch().name} • ${navObj ? navObj.subtitle : ''}`;
+            renderSidebarNav();
+            toggleMobileSidebar(false);
+            renderCurrentSection();
+        }
+
+        function renderCurrentSection() {
+            const main = document.getElementById('main-content');
+            switch (state.activeSection) {
+                case 'dashboard': main.innerHTML = viewDashboard(); break;
+                case 'classes': main.innerHTML = viewClasses(); break;
+                case 'students': main.innerHTML = viewStudents(); break;
+                case 'attendance': main.innerHTML = viewAttendance(); break;
+                case 'merit': main.innerHTML = viewMerit(); break;
+                case 'announcements': main.innerHTML = viewAnnouncements(); break;
+                case 'songs': main.innerHTML = viewSongs(); break;
+                case 'calendar': main.innerHTML = viewCalendar(); break;
+                case 'abm': main.innerHTML = viewABM(); break;
+            }
+            lucide.createIcons();
+        }
+
+        /* ===================================================================
+           5. PAPARAN 1: RINGKASAN UTAMA (DASHBOARD)
+        =================================================================== */
+        function viewDashboard() {
+            const classes = getChurchClasses();
+            const students = getChurchStudents();
+            const latestDate = state.selectedAttendanceDate;
+            const dayAtt = state.attendance[latestDate] || {};
+            const presentCount = students.filter(s => dayAtt[s.id] === 'hadir').length;
+            const attRate = students.length ? Math.round((presentCount / students.length) * 100) : 0;
+            const totalTeachers = classes.reduce((acc, c) => acc + c.teachers.length, 0);
+            const topStudents = [...students].sort((a, b) => b.points - a.points).slice(0, 4);
+            const recentInduk = state.announcements.filter(a => a.level === 'induk').slice(0, 2);
+
+            return `
+                <!-- Kad Statistik Utama -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-xs font-semibold text-slate-500 uppercase">Jumlah Anak ASM</span>
+                            <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center"><i data-lucide="users" class="w-5 h-5"></i></div>
+                        </div>
+                        <div class="text-3xl font-extrabold text-slate-900">${students.length}</div>
+                        <p class="text-xs text-slate-500 mt-1">Berdaftar di ${getActiveChurch().code}</p>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-xs font-semibold text-slate-500 uppercase">Kelas & Guru Aktif</span>
+                            <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center"><i data-lucide="graduation-cap" class="w-5 h-5"></i></div>
+                        </div>
+                        <div class="text-3xl font-extrabold text-slate-900">${classes.length} <span class="text-base font-semibold text-slate-400">/ ${totalTeachers} Guru</span></div>
+                        <p class="text-xs text-slate-500 mt-1">Sokongan kelas gabungan & pecahan</p>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-xs font-semibold text-slate-500 uppercase">Kehadiran Terkini</span>
+                            <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center"><i data-lucide="calendar-check" class="w-5 h-5"></i></div>
+                        </div>
+                        <div class="text-3xl font-extrabold text-slate-900">${attRate}%</div>
+                        <p class="text-xs text-slate-500 mt-1">${presentCount} daripada ${students.length} hadir (${latestDate})</p>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-xs font-semibold text-slate-500 uppercase">Acara Akan Datang</span>
+                            <div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center"><i data-lucide="sparkles" class="w-5 h-5"></i></div>
+                        </div>
+                        <div class="text-3xl font-extrabold text-slate-900">${state.events.length}</div>
+                        <p class="text-xs text-slate-500 mt-1 truncate">Terdekat: ${state.events[0]?.title || '-'}</p>
+                    </div>
+                </div>
+
+                <!-- Baris Kedua: Ayat Hafalan + Akses Pantas -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                    <!-- Kad Ayat Hafalan Mingguan -->
+                    <div class="lg:col-span-2 bg-gradient-to-br from-indigo-600 to-violet-700 rounded-3xl p-6 text-white shadow-lg relative overflow-hidden">
+                        <div class="flex items-center justify-between gap-2 mb-3">
+                            <span class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider bg-white/20 px-3 py-1 rounded-full">
+                                <i data-lucide="book-open" class="w-3.5 h-3.5"></i> Ayat Hafalan Mingguan
+                            </span>
+                            <span class="text-xs text-indigo-100">${state.memoryVerse.week}</span>
+                        </div>
+                        <blockquote class="text-xl sm:text-2xl font-bold leading-snug mb-2">
+                            ${state.memoryVerse.text}
+                        </blockquote>
+                        <div class="text-sm font-semibold text-amber-300 mb-4">— ${state.memoryVerse.reference}</div>
+                        <div class="bg-white/10 rounded-2xl p-3.5 text-xs text-indigo-50 flex items-start gap-2.5">
+                            <i data-lucide="lightbulb" class="w-4 h-4 text-amber-300 shrink-0 mt-0.5"></i>
+                            <span><strong>Tip Guru:</strong> ${state.memoryVerse.tip}</span>
+                        </div>
+                    </div>
+
+                    <!-- Carta Merit Tertinggi -->
+                    <div class="bg-white rounded-3xl border border-slate-200 p-5 shadow-xs">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-slate-900 flex items-center gap-2">
+                                <i data-lucide="trophy" class="w-4 h-4 text-amber-500"></i> Pendahulu Merit
+                            </h3>
+                            <button onclick="navigateTo('merit')" class="text-xs font-semibold text-indigo-600 hover:underline">Lihat Semua</button>
+                        </div>
+                        <div class="space-y-3">
+                            ${topStudents.length ? topStudents.map((s, i) => `
+                                <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50">
+                                    <div class="flex items-center gap-3 min-w-0">
+                                        <span class="w-6 h-6 rounded-lg ${i === 0 ? 'bg-amber-400 text-white' : 'bg-slate-200 text-slate-700'} text-xs font-bold flex items-center justify-center shrink-0">${i + 1}</span>
+                                        <div class="truncate">
+                                            <div class="text-sm font-semibold text-slate-800 truncate">${s.name}</div>
+                                            <div class="text-[11px] text-slate-500 truncate">${getClassById(s.classId)?.name || '-'}</div>
+                                        </div>
+                                    </div>
+                                    <span class="text-xs font-extrabold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg shrink-0">${s.points} mata</span>
+                                </div>
+                            `).join('') : '<p class="text-sm text-slate-400 text-center py-6">Tiada rekod murid.</p>'}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Baris Ketiga: Pengumuman Induk Terkini & Tindakan Pantas -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 bg-white rounded-3xl border border-slate-200 p-5 shadow-xs">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-slate-900 flex items-center gap-2">
+                                <i data-lucide="megaphone" class="w-4 h-4 text-indigo-600"></i> Pengumuman Induk (Gereja Pusat)
+                            </h3>
+                            <button onclick="navigateTo('announcements')" class="text-xs font-semibold text-indigo-600 hover:underline">Buka Papan</button>
+                        </div>
+                        <div class="space-y-3">
+                            ${recentInduk.map(a => `
+                                <div class="p-4 rounded-2xl bg-indigo-50/50 border border-indigo-100">
+                                    <div class="flex items-center justify-between gap-2 mb-1">
+                                        <h4 class="font-bold text-sm text-slate-900">${a.title}</h4>
+                                        <span class="text-[11px] font-medium text-slate-500 shrink-0">${a.date}</span>
+                                    </div>
+                                    <p class="text-xs text-slate-600 leading-relaxed">${a.content}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-3xl border border-slate-200 p-5 shadow-xs">
+                        <h3 class="font-bold text-slate-900 mb-4">Tindakan Pantas</h3>
+                        <div class="grid grid-cols-2 gap-2.5">
+                            <button onclick="navigateTo('attendance')" class="p-3.5 rounded-2xl bg-blue-50 hover:bg-blue-100 text-blue-700 text-left transition">
+                                <i data-lucide="check-square" class="w-5 h-5 mb-2"></i>
+                                <div class="text-xs font-bold">Tanda Kehadiran</div>
+                            </button>
+                            <button onclick="openCreateClassModal()" class="p-3.5 rounded-2xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-left transition">
+                                <i data-lucide="plus-circle" class="w-5 h-5 mb-2"></i>
+                                <div class="text-xs font-bold">Cipta Kelas</div>
+                            </button>
+                            <button onclick="openAddStudentModal()" class="p-3.5 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-left transition">
+                                <i data-lucide="user-plus" class="w-5 h-5 mb-2"></i>
+                                <div class="text-xs font-bold">Daftar Anak</div>
+                            </button>
+                            <button onclick="navigateTo('abm')" class="p-3.5 rounded-2xl bg-amber-50 hover:bg-amber-100 text-amber-700 text-left transition">
+                                <i data-lucide="crown" class="w-5 h-5 mb-2"></i>
+                                <div class="text-xs font-bold">Bank ABM</div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        /* ===================================================================
+           6. PAPARAN 2: PENGURUSAN KELAS GAYA GOOGLE CLASSROOM
+        =================================================================== */
+        function viewClasses() {
+            const classes = getChurchClasses();
+            return `
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-900">Senarai Kelas — ${getActiveChurch().name}</h2>
+                        <p class="text-xs text-slate-500">Sokongan Kelas Gabungan dan pecahan kategori umur tanpa had.</p>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="openJoinClassModal()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-sm font-semibold transition">
+                            <i data-lucide="key-round" class="w-4 h-4"></i> Sertai Guna Kod
+                        </button>
+                        <button onclick="openCreateClassModal()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-md shadow-indigo-200 transition">
+                            <i data-lucide="plus" class="w-4 h-4"></i> Cipta Kelas Baharu
+                        </button>
+                    </div>
+                </div>
+
+                ${classes.length === 0 ? `
+                    <div class="bg-white rounded-3xl border border-dashed border-slate-300 p-12 text-center">
+                        <i data-lucide="graduation-cap" class="w-12 h-12 text-slate-300 mx-auto mb-3"></i>
+                        <h3 class="font-bold text-slate-700">Belum ada kelas dicipta</h3>
+                        <p class="text-xs text-slate-500 mt-1 mb-4">Cipta kelas gabungan atau pecahan umur untuk gereja ini.</p>
+                        <button onclick="openCreateClassModal()" class="px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold">Cipta Kelas Pertama</button>
+                    </div>
+                ` : `
+                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                        ${classes.map(cls => {
+                            const studentCount = state.students.filter(s => s.classId === cls.id).length;
+                            const inviteLink = `https://asm.gereja.my/join?code=${cls.code}`;
+                            return `
+                                <div class="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden flex flex-col">
+                                    <!-- Banner Gaya Google Classroom -->
+                                    <div class="bg-gradient-to-r ${cls.bannerColor} p-5 text-white relative">
+                                        <div class="flex items-start justify-between gap-2">
+                                            <div>
+                                                <span class="inline-block text-[10px] font-bold uppercase tracking-wider bg-white/20 px-2.5 py-0.5 rounded-full mb-2">
+                                                    ${cls.type === 'gabungan' ? 'Kelas Gabungan' : 'Pecahan Umur'}
+                                                </span>
+                                                <h3 class="font-extrabold text-lg leading-snug">${cls.name}</h3>
+                                                <p class="text-xs text-white/90 mt-0.5">${cls.category}</p>
+                                            </div>
+                                            <button onclick="regenerateClassCode('${cls.id}')" title="Jana Semula Kod Kelas" class="p-2 rounded-xl bg-white/15 hover:bg-white/25 transition">
+                                                <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Maklumat Kod Kelas & Jemputan -->
+                                    <div class="p-5 flex-1 flex flex-col justify-between space-y-4">
+                                        <div class="bg-slate-50 rounded-2xl p-3.5 border border-slate-100">
+                                            <div class="flex items-center justify-between mb-2">
+                                                <span class="text-[11px] font-bold uppercase text-slate-400">Kod Kelas</span>
+                                                <span class="text-xs font-semibold text-slate-500">${studentCount} Anak ASM</span>
+                                            </div>
+                                            <div class="flex items-center justify-between gap-2">
+                                                <code class="text-lg font-extrabold tracking-widest text-indigo-600">${cls.code}</code>
+                                                <div class="flex items-center gap-1.5">
+                                                    <button onclick="copyTextToClipboard('${cls.code}', 'Kod Kelas')" class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-xs font-semibold text-slate-700 flex items-center gap-1">
+                                                        <i data-lucide="copy" class="w-3.5 h-3.5"></i> Kod
+                                                    </button>
+                                                    <button onclick="copyTextToClipboard('${inviteLink}', 'Pautan Jemputan')" class="px-2.5 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-xs font-semibold text-indigo-700 flex items-center gap-1">
+                                                        <i data-lucide="link" class="w-3.5 h-3.5"></i> Pautan
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Senarai Guru Bertugas -->
+                                        <div>
+                                            <div class="flex items-center justify-between mb-2">
+                                                <span class="text-xs font-bold text-slate-700">Guru Bertugas (${cls.teachers.length})</span>
+                                                <button onclick="openAddTeacherModal('${cls.id}')" class="text-xs font-semibold text-indigo-600 hover:underline flex items-center gap-1">
+                                                    <i data-lucide="user-plus" class="w-3.5 h-3.5"></i> Lantik Guru
+                                                </button>
+                                            </div>
+                                            <div class="space-y-2">
+                                                ${cls.teachers.length === 0 ? '<p class="text-xs text-slate-400 italic">Tiada guru bertugas.</p>' : cls.teachers.map(t => `
+                                                    <div class="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                                                        <div class="min-w-0">
+                                                            <div class="text-xs font-bold text-slate-800 truncate">${t.name}</div>
+                                                            <div class="text-[11px] text-slate-500 truncate">Giliran: ${t.shift}</div>
+                                                        </div>
+                                                        <button onclick="removeTeacherFromClass('${cls.id}', '${t.id}')" title="Keluarkan guru tamat giliran" class="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 transition shrink-0">
+                                                            <i data-lucide="user-minus" class="w-4 h-4"></i>
+                                                        </button>
+                                                    </div>
+                                                `).join('')}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `}
+            `;
+        }
+
+        function openCreateClassModal() {
+            const banners = [
+                { label: 'Indigo Biru', val: 'from-indigo-500 to-blue-600' },
+                { label: 'Merah Jambu', val: 'from-pink-500 to-rose-500' },
+                { label: 'Zamrud Hijau', val: 'from-emerald-500 to-teal-600' },
+                { label: 'Oren Amber', val: 'from-amber-500 to-orange-600' },
+                { label: 'Ungu Violet', val: 'from-violet-500 to-purple-600' }
+            ];
+            openModal('Cipta Kelas ASM Baharu', `
+                <form onsubmit="handleCreateClass(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Jenis Pembahagian Kelas</label>
+                        <select id="cls-type" class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                            <option value="pecahan">Pecahan Kategori Umur (Tanpa Had)</option>
+                            <option value="gabungan">Kelas Gabungan (Semua Peringkat Umur)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Nama Kelas</label>
+                        <input id="cls-name" required placeholder="cth: Kelas Pra-Remaja / Kelas Gabungan" class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Kategori Umur</label>
+                        <input id="cls-category" required placeholder="cth: Prasekolah (4-6 Tahun) / Semua Umur" class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Tema Warna Kad</label>
+                        <select id="cls-color" class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm">
+                            ${banners.map(b => `<option value="${b.val}">${b.label}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="pt-2 flex justify-end gap-2">
+                        <button type="button" onclick="closeModal()" class="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-700 text-sm font-semibold">Batal</button>
+                        <button type="submit" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold">Cipta & Jana Kod</button>
+                    </div>
+                </form>
+            `);
+        }
+
+        function handleCreateClass(e) {
+            e.preventDefault();
+            const newClass = {
+                id: 'cls-' + Date.now(),
+                churchId: state.activeChurchId,
+                name: document.getElementById('cls-name').value.trim(),
+                category: document.getElementById('cls-category').value.trim(),
+                type: document.getElementById('cls-type').value,
+                code: generateClassCode(),
+                bannerColor: document.getElementById('cls-color').value,
+                teachers: [{
+                    id: 't-' + Date.now(),
+                    name: state.currentUser.name,
+                    email: state.currentUser.email,
+                    shift: 'Bertugas Semasa'
+                }]
+            };
+            state.classes.push(newClass);
+            closeModal();
+            renderCurrentSection();
+            showToast(`Kelas "${newClass.name}" dicipta! Kod: ${newClass.code}`, 'success');
+        }
+
+        function regenerateClassCode(classId) {
+            const cls = getClassById(classId);
+            if (!cls) return;
+            cls.code = generateClassCode();
+            renderCurrentSection();
+            showToast(`Kod baharu untuk ${cls.name}: ${cls.code}`, 'info');
+        }
+
+        function openJoinClassModal() {
+            openModal('Sertai Kelas Menggunakan Kod', `
+                <form onsubmit="handleJoinClass(event)" class="space-y-4">
+                    <p class="text-xs text-slate-500">Masukkan 6 aksara Kod Kelas yang diberikan oleh pentadbir gereja untuk menyertai sebagai guru bertugas.</p>
+                    <input id="join-code-input" required placeholder="cth: ASM46A" class="w-full rounded-xl border border-slate-200 px-4 py-3 text-center text-lg font-extrabold tracking-widest uppercase focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    <div class="flex justify-end gap-2">
+                        <button type="button" onclick="closeModal()" class="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-700 text-sm font-semibold">Batal</button>
+                        <button type="submit" class="px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold">Sertai Kelas</button>
+                    </div>
+                </form>
+            `);
+        }
+
+        function handleJoinClass(e) {
+            e.preventDefault();
+            const code = document.getElementById('join-code-input').value.trim().toUpperCase();
+            const cls = state.classes.find(c => c.code === code);
+            if (!cls) {
+                showToast('Kod Kelas tidak sah atau tidak dijumpai.', 'error');
+                return;
+            }
+            const exists = cls.teachers.some(t => t.email === state.currentUser.email);
+            if (!exists) {
+                cls.teachers.push({
+                    id: 't-' + Date.now(),
+                    name: state.currentUser.name,
+                    email: state.currentUser.email,
+                    shift: 'Sertai via Kod'
+                });
+            }
+            state.activeChurchId = cls.churchId;
+            renderChurchSelector();
+            closeModal();
+            renderCurrentSection();
+            showToast(`Anda berjaya menyertai ${cls.name}!`, 'success');
+        }
+
+        function openAddTeacherModal(classId) {
+            const cls = getClassById(classId);
+            openModal(`Lantik Guru — ${cls.name}`, `
+                <form onsubmit="handleAddTeacher(event, '${classId}')" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Nama Guru</label>
+                        <input id="t-name" required placeholder="cth: Cikgu Priscilla" class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Emel Akaun Google</label>
+                        <input id="t-email" type="email" required placeholder="priscilla@gmail.com" class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Tempoh Giliran</label>
+                        <input id="t-shift" required placeholder="cth: Disember 2026" class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm">
+                    </div>
+                    <div class="flex justify-end gap-2">
+                        <button type="button" onclick="closeModal()" class="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-700 text-sm font-semibold">Batal</button>
+                        <button type="submit" class="px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold">Simpan Guru</button>
+                    </div>
+                </form>
+            `);
+        }
+
+        function handleAddTeacher(e, classId) {
+            e.preventDefault();
+            const cls = getClassById(classId);
+            cls.teachers.push({
+                id: 't-' + Date.now(),
+                name: document.getElementById('t-name').value.trim(),
+                email: document.getElementById('t-email').value.trim(),
+                shift: document.getElementById('t-shift').value.trim()
+            });
+            closeModal();
+            renderCurrentSection();
+            showToast('Guru bertugas baharu berjaya dilantik.', 'success');
+        }
+
+        function removeTeacherFromClass(classId, teacherId) {
+            const cls = getClassById(classId);
+            if (!cls) return;
+            const teacher = cls.teachers.find(t => t.id === teacherId);
+            cls.teachers = cls.teachers.filter(t => t.id !== teacherId);
+            renderCurrentSection();
+            showToast(`${teacher?.name || 'Guru'} telah dikeluarkan (tamat giliran).`, 'info');
+        }
+
+        /* ===================================================================
+           7. PAPARAN 3: PENDAFTARAN & SENARAI ANAK ASM
+        =================================================================== */
+        function viewStudents() {
+            const classes = getChurchClasses();
+            let students = getChurchStudents();
+            if (state.selectedStudentClassFilter !== 'all') {
+                students = students.filter(s => s.classId === state.selectedStudentClassFilter);
+            }
+            if (state.studentSearch.trim()) {
+                const q = state.studentSearch.toLowerCase();
+                students = students.filter(s => s.name.toLowerCase().includes(q) || s.parentName.toLowerCase().includes(q));
+            }
+
+            return `
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                    <div class="flex flex-col sm:flex-row gap-2.5 flex-1">
+                        <div class="relative flex-1 max-w-sm">
+                            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                            <input type="text" value="${state.studentSearch}" oninput="state.studentSearch=this.value; renderCurrentSection();" placeholder="Cari nama anak atau ibu bapa..." class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                        </div>
+                        <select onchange="state.selectedStudentClassFilter=this.value; renderCurrentSection();" class="rounded-xl bg-white border border-slate-200 px-3.5 py-2.5 text-sm font-medium text-slate-700">
+                            <option value="all" ${state.selectedStudentClassFilter === 'all' ? 'selected' : ''}>Semua Kelas</option>
+                            ${classes.map(c => `<option value="${c.id}" ${state.selectedStudentClassFilter === c.id ? 'selected' : ''}>${c.name}</option>`).join('')}
+                        </select>
+                    </div>
+                    <button onclick="openAddStudentModal()" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-md shadow-indigo-200 transition">
+                        <i data-lucide="user-plus" class="w-4 h-4"></i> Daftar Anak ASM
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                                    <th class="py-3.5 px-5">Nama Anak ASM</th>
+                                    <th class="py-3.5 px-4">Umur</th>
+                                    <th class="py-3.5 px-4">Kelas</th>
+                                    <th class="py-3.5 px-4">Ibu Bapa / Penjaga</th>
+                                    <th class="py-3.5 px-4 text-center">Mata Merit</th>
+                                    <th class="py-3.5 px-5 text-right">Tindakan</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 text-sm">
+                                ${students.length === 0 ? `
+                                    <tr><td colspan="6" class="py-10 text-center text-slate-400">Tiada rekod anak ASM ditemui.</td></tr>
+                                ` : students.map(s => {
+                                    const cls = getClassById(s.classId);
+                                    return `
+                                        <tr class="hover:bg-slate-50/70 transition">
+                                            <td class="py-3.5 px-5 font-bold text-slate-900">${s.name}</td>
+                                            <td class="py-3.5 px-4 text-slate-600">${s.age} thn</td>
+                                            <td class="py-3.5 px-4">
+                                                <span class="inline-block px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 text-xs font-semibold">${cls ? cls.name : '-'}</span>
+                                            </td>
+                                            <td class="py-3.5 px-4">
+                                                <div class="font-medium text-slate-800 text-xs">${s.parentName}</div>
+                                                <div class="text-[11px] text-slate-400">${s.parentPhone}</div>
+                                            </td>
+                                            <td class="py-3.5 px-4 text-center">
+                                                <span class="font-extrabold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg text-xs">${s.points}</span>
+                                            </td>
+                                            <td class="py-3.5 px-5 text-right whitespace-nowrap">
+                                                <button onclick="openEditStudentModal('${s.id}')" class="p-2 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-indigo-600" title="Kemas Kini">
+                                                    <i data-lucide="pencil" class="w-4 h-4"></i>
+                                                </button>
+                                                <button onclick="deleteStudent('${s.id}')" class="p-2 rounded-lg text-slate-500 hover:bg-rose-50 hover:text-rose-600" title="Padam">
+                                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        function openAddStudentModal(student = null) {
+            const classes = getChurchClasses();
+            if (classes.length === 0) {
+                showToast('Sila cipta sekurang-kurangnya satu kelas terlebih dahulu.', 'warning');
+                return;
+            }
+            const isEdit = Boolean(student);
+            openModal(isEdit ? 'Kemas Kini Rekod Anak ASM' : 'Daftar Anak ASM Baharu', `
+                <form onsubmit="handleSaveStudent(event, '${isEdit ? student.id : ''}')" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Nama Penuh Anak</label>
+                        <input id="st-name" required value="${isEdit ? student.name : ''}" placeholder="cth: Daniel Anak John" class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Umur (Tahun)</label>
+                            <input id="st-age" type="number" min="3" max="15" required value="${isEdit ? student.age : 7}" class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Kelas ASM</label>
+                            <select id="st-class" class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm">
+                                ${classes.map(c => `<option value="${c.id}" ${isEdit && student.classId === c.id ? 'selected' : ''}>${c.name}</option>`).join('')}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Nama Ibu Bapa / Penjaga</label>
+                            <input id="st-parent" required value="${isEdit ? student.parentName : ''}" placeholder="cth: En. John" class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">No. Telefon</label>
+                            <input id="st-phone" required value="${isEdit ? student.parentPhone : ''}" placeholder="012-3456789" class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm">
+                        </div>
+                    </div>
+                    <div class="flex justify-end gap-2 pt-2">
+                        <button type="button" onclick="closeModal()" class="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-700 text-sm font-semibold">Batal</button>
+                        <button type="submit" class="px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold">${isEdit ? 'Simpan Perubahan' : 'Daftar Anak'}</button>
+                    </div>
+                </form>
+            `);
+        }
+
+        function openEditStudentModal(id) {
+            const st = state.students.find(s => s.id === id);
+            if (st) openAddStudentModal(st);
+        }
+
+        function handleSaveStudent(e, editId) {
+            e.preventDefault();
+            const payload = {
+                name: document.getElementById('st-name').value.trim(),
+                age: parseInt(document.getElementById('st-age').value, 10),
+                classId: document.getElementById('st-class').value,
+                parentName: document.getElementById('st-parent').value.trim(),
+                parentPhone: document.getElementById('st-phone').value.trim()
+            };
+            if (editId) {
+                const idx = state.students.findIndex(s => s.id === editId);
+                if (idx !== -1) state.students[idx] = { ...state.students[idx], ...payload };
+                showToast('Rekod anak ASM berjaya dikemas kini.', 'success');
+            } else {
+                state.students.push({
+                    id: 's-' + Date.now(),
+                    churchId: state.activeChurchId,
+                    points: 10,
+                    ...payload
+                });
+                showToast('Anak ASM baharu berjaya didaftarkan (+10 mata alu-aluan).', 'success');
+            }
+            closeModal();
+            renderCurrentSection();
+        }
+
+        function deleteStudent(id) {
+            const st = state.students.find(s => s.id === id);
+            state.students = state.students.filter(s => s.id !== id);
+            renderCurrentSection();
+            showToast(`Rekod ${st?.name || 'murid'} telah dipadam.`, 'info');
+        }
+
+        /* ===================================================================
+           8. PAPARAN 4: KEHADIRAN MINGGUAN & EKSPORT EXCEL / PDF
+        =================================================================== */
+        function viewAttendance() {
+            const classes = getChurchClasses();
+            let students = getChurchStudents();
+            if (state.selectedAttendanceClassId !== 'all') {
+                students = students.filter(s => s.classId === state.selectedAttendanceClassId);
+            }
+            const date = state.selectedAttendanceDate;
+            if (!state.attendance[date]) state.attendance[date] = {};
+            const dayAtt = state.attendance[date];
+
+            const presentCount = students.filter(s => dayAtt[s.id] === 'hadir').length;
+            const absentCount = students.filter(s => dayAtt[s.id] === 'tidak').length;
+            const rate = students.length ? Math.round((presentCount / students.length) * 100) : 0;
+
+            return `
+                <!-- Bar Kawalan Tarikh Ahad & Eksport -->
+                <div class="bg-white rounded-3xl border border-slate-200 p-5 mb-6 shadow-xs">
+                    <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1 max-w-xl">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 mb-1">Tarikh Ahad</label>
+                                <input type="date" value="${date}" onchange="state.selectedAttendanceDate=this.value; renderCurrentSection();" class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm font-semibold">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 mb-1">Tapis Kelas</label>
+                                <select onchange="state.selectedAttendanceClassId=this.value; renderCurrentSection();" class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm font-semibold">
+                                    <option value="all" ${state.selectedAttendanceClassId === 'all' ? 'selected' : ''}>Semua Kelas</option>
+                                    ${classes.map(c => `<option value="${c.id}" ${state.selectedAttendanceClassId === c.id ? 'selected' : ''}>${c.name}</option>`).join('')}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="markAllPresent()" class="px-3.5 py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold flex items-center gap-1.5">
+                                <i data-lucide="check-check" class="w-4 h-4"></i> Tanda Semua Hadir
+                            </button>
+                            <button onclick="exportAttendanceCSV()" class="px-3.5 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs">
+                                <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Eksport Excel (.CSV)
+                            </button>
+                            <button onclick="exportAttendancePDF()" class="px-3.5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs">
+                                <i data-lucide="file-text" class="w-4 h-4"></i> Eksport Laporan PDF
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Ringkasan Peratusan -->
+                    <div class="grid grid-cols-3 gap-3 mt-5 pt-5 border-t border-slate-100">
+                        <div class="bg-emerald-50 rounded-2xl p-3.5 text-center">
+                            <div class="text-xs font-semibold text-emerald-700">Hadir</div>
+                            <div class="text-2xl font-extrabold text-emerald-700">${presentCount}</div>
+                        </div>
+                        <div class="bg-rose-50 rounded-2xl p-3.5 text-center">
+                            <div class="text-xs font-semibold text-rose-700">Tidak Hadir</div>
+                            <div class="text-2xl font-extrabold text-rose-700">${absentCount}</div>
+                        </div>
+                        <div class="bg-indigo-50 rounded-2xl p-3.5 text-center">
+                            <div class="text-xs font-semibold text-indigo-700">Peratus Kehadiran</div>
+                            <div class="text-2xl font-extrabold text-indigo-700">${rate}%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Senarai Tanda Kehadiran -->
+                <div class="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
+                    <div class="divide-y divide-slate-100">
+                        ${students.length === 0 ? `<div class="p-10 text-center text-slate-400 text-sm">Tiada murid untuk ditanda kehadiran.</div>` : students.map(s => {
+                            const status = dayAtt[s.id] || '';
+                            const cls = getClassById(s.classId);
+                            return `
+                                <div class="p-4 sm:px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/70">
+                                    <div>
+                                        <div class="font-bold text-slate-900 text-sm">${s.name}</div>
+                                        <div class="text-xs text-slate-500">${cls ? cls.name : '-'} • ${s.age} tahun</div>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <button onclick="setAttendance('${s.id}', 'hadir')"
+                                            class="flex-1 sm:flex-none px-4 py-2 rounded-xl text-xs font-bold border transition flex items-center justify-center gap-1.5 ${status === 'hadir' ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm' : 'bg-white text-slate-600 border-slate-200 hover:bg-emerald-50'}">
+                                            <i data-lucide="check" class="w-3.5 h-3.5"></i> Hadir
+                                        </button>
+                                        <button onclick="setAttendance('${s.id}', 'tidak')"
+                                            class="flex-1 sm:flex-none px-4 py-2 rounded-xl text-xs font-bold border transition flex items-center justify-center gap-1.5 ${status === 'tidak' ? 'bg-rose-600 text-white border-rose-600 shadow-sm' : 'bg-white text-slate-600 border-slate-200 hover:bg-rose-50'}">
+                                            <i data-lucide="x" class="w-3.5 h-3.5"></i> Tidak Hadir
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function setAttendance(studentId, status) {
+            const date = state.selectedAttendanceDate;
+            if (!state.attendance[date]) state.attendance[date] = {};
+            state.attendance[date][studentId] = status;
+            renderCurrentSection();
+        }
+
+        function markAllPresent() {
+            const date = state.selectedAttendanceDate;
+            if (!state.attendance[date]) state.attendance[date] = {};
+            let students = getChurchStudents();
+            if (state.selectedAttendanceClassId !== 'all') {
+                students = students.filter(s => s.classId === state.selectedAttendanceClassId);
+            }
+            students.forEach(s => { state.attendance[date][s.id] = 'hadir'; });
+            renderCurrentSection();
+            showToast(`Semua ${students.length} anak ditanda Hadir bagi ${date}.`, 'success');
+        }
+
+        function exportAttendanceCSV() {
+            const church = getActiveChurch();
+            const students = getChurchStudents();
+            const dates = Object.keys(state.attendance).sort();
+
+            let csv = '\uFEFF'; // BOM UTF-8 untuk Excel
+            csv += `"LAPORAN KEHADIRAN RASMI ASM - ${church.name}"\n`;
+            csv += `"Dijana pada: ${new Date().toLocaleDateString('ms-MY')}"\n\n`;
+            csv += ['Nama Anak ASM', 'Umur', 'Kelas', ...dates, 'Peratus Hadir (%)'].map(v => `"${v}"`).join(',') + '\n';
+
+            students.forEach(s => {
+                const clsName = getClassById(s.classId)?.name || '-';
+                let hadirCount = 0;
+                const rowDates = dates.map(d => {
+                    const st = state.attendance[d]?.[s.id];
+                    if (st === 'hadir') { hadirCount++; return 'Hadir'; }
+                    if (st === 'tidak') return 'Tidak Hadir';
+                    return '-';
+                });
+                const pct = dates.length ? Math.round((hadirCount / dates.length) * 100) : 0;
+                csv += [s.name, s.age, clsName, ...rowDates, `${pct}%`].map(v => `"${v}"`).join(',') + '\n';
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Laporan_Kehadiran_ASM_${church.code}_${state.selectedAttendanceDate}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Fail Excel (.CSV) laporan kehadiran telah dimuat turun.', 'success');
+        }
+
+        function exportAttendancePDF() {
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                const church = getActiveChurch();
+                const students = getChurchStudents();
+                const dates = Object.keys(state.attendance).sort();
+
+                doc.setFontSize(16);
+                doc.setTextColor(79, 70, 229);
+                doc.text('LAPORAN RASMI KEHADIRAN ASM', 14, 18);
+
+                doc.setFontSize(10);
+                doc.setTextColor(71, 85, 105);
+                doc.text(`Gereja: ${church.name} (${church.code})`, 14, 26);
+                doc.text(`Tarikh Cetakan: ${new Date().toLocaleDateString('ms-MY')} | Dijana oleh: ${state.currentUser.name}`, 14, 32);
+
+                const head = [['Bil', 'Nama Anak ASM', 'Kelas', ...dates, '% Hadir']];
+                const body = students.map((s, idx) => {
+                    const clsName = getClassById(s.classId)?.name || '-';
+                    let hadirCount = 0;
+                    const rowDates = dates.map(d => {
+                        const st = state.attendance[d]?.[s.id];
+                        if (st === 'hadir') { hadirCount++; return 'H'; }
+                        if (st === 'tidak') return 'TH';
+                        return '-';
+                    });
+                    const pct = dates.length ? Math.round((hadirCount / dates.length) * 100) + '%' : '0%';
+                    return [idx + 1, s.name, clsName, ...rowDates, pct];
+                });
+
+                doc.autoTable({
+                    startY: 38,
+                    head: head,
+                    body: body,
+                    theme: 'grid',
+                    headStyles: { fillColor: [79, 70, 229] },
+                    styles: { fontSize: 8 }
+                });
+
+                doc.save(`Laporan_Rasmi_ASM_${church.code}.pdf`);
+                showToast('Laporan PDF rasmi berjaya dijana dan dimuat turun.', 'success');
+            } catch (err) {
+                console.error(err);
+                showToast('Gagal menjana PDF secara automatik. Sila cuba lagi.', 'error');
+            }
+        }
+
+        /* ===================================================================
+           9. PAPARAN 5: SISTEM MERIT & DEMERIT
+        =================================================================== */
+        function viewMerit() {
+            const students = [...getChurchStudents()].sort((a, b) => b.points - a.points);
+            const logs = state.meritLogs.filter(l => l.churchId === state.activeChurchId);
+
+            return `
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-900">Sistem Merit & Demerit Sahsiah</h2>
+                        <p class="text-xs text-slate-500">Pantau perkembangan hafalan, disiplin, dan sahsiah anak ASM.</p>
+                    </div>
+                    <button onclick="openMeritModal()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-md shadow-indigo-200">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i> Rekod Merit / Demerit
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Papan Kedudukan Mata -->
+                    <div class="bg-white rounded-3xl border border-slate-200 p-5 shadow-xs">
+                        <h3 class="font-bold text-slate-900 mb-4 flex items-center gap-2">
+                            <i data-lucide="trophy" class="w-4 h-4 text-amber-500"></i> Jumlah Mata Murid
+                        </h3>
+                        <div class="space-y-2.5">
+                            ${students.map((s, idx) => `
+                                <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-100">
+                                    <div class="flex items-center gap-3 min-w-0">
+                                        <span class="w-7 h-7 rounded-xl ${idx < 3 ? 'bg-amber-400 text-white' : 'bg-slate-200 text-slate-600'} text-xs font-extrabold flex items-center justify-center shrink-0">${idx + 1}</span>
+                                        <div class="truncate">
+                                            <div class="text-sm font-bold text-slate-800 truncate">${s.name}</div>
+                                            <div class="text-[11px] text-slate-500 truncate">${getClassById(s.classId)?.name || '-'}</div>
+                                        </div>
+                                    </div>
+                                    <span class="text-sm font-extrabold text-indigo-600 shrink-0">${s.points} pt</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- Sejarah Transaksi Merit/Demerit -->
+                    <div class="lg:col-span-2 bg-white rounded-3xl border border-slate-200 p-5 shadow-xs">
+                        <h3 class="font-bold text-slate-900 mb-4">Sejarah Rekod Merit & Demerit</h3>
+                        <div class="space-y-3">
+                            ${logs.length === 0 ? '<p class="text-sm text-slate-400 text-center py-8">Belum ada rekod merit atau demerit.</p>' : logs.map(l => {
+                                const st = state.students.find(s => s.id === l.studentId);
+                                const isMerit = l.type === 'merit';
+                                return `
+                                    <div class="p-4 rounded-2xl border ${isMerit ? 'border-emerald-100 bg-emerald-50/40' : 'border-rose-100 bg-rose-50/40'} flex items-start justify-between gap-3">
+                                        <div>
+                                            <div class="flex items-center gap-2 flex-wrap mb-1">
+                                                <span class="font-bold text-sm text-slate-900">${st ? st.name : 'Murid'}</span>
+                                                <span class="text-[11px] font-bold px-2 py-0.5 rounded-full ${isMerit ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}">${l.category}</span>
+                                            </div>
+                                            <p class="text-xs text-slate-600">${l.reason}</p>
+                                            <div class="text-[11px] text-slate-400 mt-1.5">Oleh ${l.by} • ${l.date}</div>
+                                        </div>
+                                        <span class="text-base font-extrabold shrink-0 ${isMerit ? 'text-emerald-600' : 'text-rose-600'}">
+                                            ${isMerit ? '+' : ''}${l.points}
+                                        </span>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function openMeritModal() {
+            const students = getChurchStudents();
+            if (!students.length) {
+                showToast('Tiada anak ASM berdaftar di gereja ini.', 'warning');
+                return;
+            }
+            openModal('Rekod Merit / Demerit', `
+                <form onsubmit="handleSaveMerit(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Pilih Anak ASM</label>
+                        <select id="m-student" class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm">
+                            ${students.map(s => `<option value="${s.id}">${s.name} (${s.points} mata)</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Jenis Rekod</label>
+                            <select id="m-type" class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm">
+                                <option value="merit">Merit (+ Tambah Mata)</option>
+                                <option value="demerit">Demerit (- Potong Mata)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Jumlah Mata</label>
+                            <input id="m-points" type="number" min="1" max="50" value="10" required class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Kategori</label>
+                        <select id="m-category" class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm">
+                            <option value="Hafalan">Hafalan Ayat</option>
+                            <option value="Sahsiah">Sahsiah & Kerjasama</option>
+                            <option value="Disiplin">Disiplin Kelas</option>
+                            <option value="Kehadiran">Kehadiran Awal</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Catatan / Sebab</label>
+                        <textarea id="m-reason" required rows="2" placeholder="cth: Menghafal ayat mingguan dengan penuh yakin" class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm"></textarea>
+                    </div>
+                    <div class="flex justify-end gap-2">
+                        <button type="button" onclick="closeModal()" class="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-700 text-sm font-semibold">Batal</button>
+                        <button type="submit" class="px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold">Simpan Rekod</button>
+                    </div>
+                </form>
+            `);
+        }
+
+        function handleSaveMerit(e) {
+            e.preventDefault();
+            const studentId = document.getElementById('m-student').value;
+            const type = document.getElementById('m-type').value;
+            const rawPts = parseInt(document.getElementById('m-points').value, 10);
+            const points = type === 'merit' ? Math.abs(rawPts) : -Math.abs(rawPts);
+
+            const st = state.students.find(s => s.id === studentId);
+            if (st) st.points = Math.max(0, st.points + points);
+
+            state.meritLogs.unshift({
+                id: 'm-' + Date.now(),
+                studentId,
+                churchId: state.activeChurchId,
+                type,
+                points,
+                category: document.getElementById('m-category').value,
+                reason: document.getElementById('m-reason').value.trim(),
+                date: new Date().toISOString().slice(0, 10),
+                by: state.currentUser.name
+            });
+
+            closeModal();
+            renderCurrentSection();
+            showToast(`Rekod ${type === 'merit' ? 'Merit' : 'Demerit'} berjaya disimpan.`, 'success');
+        }
+
+        /* ===================================================================
+           10. PAPARAN 6: PENGUMUMAN DUA TAHAP, AYAT HAFALAN & SKRIP PEMIMPIN
+        =================================================================== */
+        function viewAnnouncements() {
+            const indukList = state.announcements.filter(a => a.level === 'induk');
+            const dalamanList = state.announcements.filter(a => a.level === 'dalaman' && a.churchId === state.activeChurchId);
+            const list = state.announcementTab === 'induk' ? indukList : dalamanList;
+
+            return `
+                <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                    <!-- Kiri: Papan Pengumuman Dua Tahap -->
+                    <div class="xl:col-span-2 space-y-6">
+                        <div class="bg-white rounded-3xl border border-slate-200 p-5 shadow-xs">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+                                <div class="inline-flex p-1 rounded-2xl bg-slate-100">
+                                    <button onclick="state.announcementTab='induk'; renderCurrentSection();" class="px-4 py-2 rounded-xl text-xs font-bold transition ${state.announcementTab === 'induk' ? 'bg-white text-indigo-600 shadow-xs' : 'text-slate-600'}">
+                                        1. Pengumuman Induk (${indukList.length})
+                                    </button>
+                                    <button onclick="state.announcementTab='dalaman'; renderCurrentSection();" class="px-4 py-2 rounded-xl text-xs font-bold transition ${state.announcementTab === 'dalaman' ? 'bg-white text-indigo-600 shadow-xs' : 'text-slate-600'}">
+                                        2. Pengumuman Dalaman (${dalamanList.length})
+                                    </button>
+                                </div>
+                                <button onclick="openAddAnnouncementModal()" class="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold">
+                                    <i data-lucide="plus" class="w-4 h-4"></i> Siar Pengumuman
+                                </button>
+                            </div>
+
+                            <div class="space-y-3">
+                                ${list.length === 0 ? '<p class="text-sm text-slate-400 text-center py-8">Tiada pengumuman buat masa ini.</p>' : list.map(a => `
+                                    <div class="p-4 rounded-2xl border ${a.level === 'induk' ? 'border-indigo-100 bg-indigo-50/40' : 'border-emerald-100 bg-emerald-50/40'}">
+                                        <div class="flex items-start justify-between gap-2 mb-1.5">
+                                            <h4 class="font-bold text-slate-900 text-sm">${a.title}</h4>
+                                            <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full shrink-0 ${a.level === 'induk' ? 'bg-indigo-600 text-white' : 'bg-emerald-600 text-white'}">
+                                                ${a.level === 'induk' ? 'Gereja Pusat' : 'Dalaman Guru'}
+                                            </span>
+                                        </div>
+                                        <p class="text-xs text-slate-600 leading-relaxed mb-2">${a.content}</p>
+                                        <div class="text-[11px] text-slate-400">Disiarkan oleh ${a.author} • ${a.date}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <!-- 4. Skrip Pemimpin -->
+                        <div class="bg-white rounded-3xl border border-slate-200 p-5 shadow-xs">
+                            <div class="flex items-center justify-between gap-2 mb-4">
+                                <div>
+                                    <span class="text-[11px] font-bold uppercase tracking-wider text-indigo-600">4. Skrip Pemimpin Bertugas</span>
+                                    <h3 class="font-bold text-slate-900 text-base">${state.leaderScript.theme}</h3>
+                                    <p class="text-xs text-slate-500">Panduan aliran sesi, teks doa & arahan aktiviti (${state.leaderScript.date})</p>
+                                </div>
+                                <button onclick="resetLeaderScript()" class="text-xs font-semibold text-slate-500 hover:text-indigo-600">Set Semula</button>
+                            </div>
+
+                            <div class="space-y-2.5">
+                                ${state.leaderScript.steps.map(step => `
+                                    <div onclick="toggleScriptStep('${step.id}')" class="cursor-pointer p-3.5 rounded-2xl border transition flex items-start gap-3 ${step.done ? 'bg-emerald-50/60 border-emerald-200' : 'bg-slate-50 border-slate-200 hover:border-indigo-300'}">
+                                        <div class="mt-0.5 w-5 h-5 rounded-md flex items-center justify-center shrink-0 ${step.done ? 'bg-emerald-600 text-white' : 'bg-white border border-slate-300'}">
+                                            ${step.done ? '<i data-lucide="check" class="w-3.5 h-3.5"></i>' : ''}
+                                        </div>
+                                        <div class="flex-1">
+                                            <div class="flex items-center justify-between gap-2">
+                                                <span class="font-bold text-sm ${step.done ? 'line-through text-slate-400' : 'text-slate-900'}">${step.title}</span>
+                                                <span class="text-[11px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md shrink-0">${step.time}</span>
+                                            </div>
+                                            <p class="text-xs text-slate-600 mt-1 leading-relaxed">${step.detail}</p>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Kanan: 3. Ayat Hafalan Mingguan -->
+                    <div class="space-y-6">
+                        <div class="bg-gradient-to-br from-indigo-600 to-violet-700 rounded-3xl p-6 text-white shadow-lg">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="text-xs font-bold uppercase tracking-wider bg-white/20 px-3 py-1 rounded-full">3. Ayat Hafalan</span>
+                                <button onclick="openEditVerseModal()" class="p-1.5 rounded-lg bg-white/15 hover:bg-white/25" title="Sunting Ayat Hafalan">
+                                    <i data-lucide="pencil" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                            <p class="text-xs text-indigo-200 mb-2">${state.memoryVerse.week}</p>
+                            <blockquote class="text-xl font-bold leading-relaxed mb-3">${state.memoryVerse.text}</blockquote>
+                            <div class="text-sm font-bold text-amber-300 mb-4">— ${state.memoryVerse.reference}</div>
+                            <div class="bg-white/10 rounded-2xl p-3.5 text-xs text-indigo-50 mb-4">
+                                <strong>Panduan Guru:</strong> ${state.memoryVerse.tip}
+                            </div>
+                            <button onclick="copyTextToClipboard('${state.memoryVerse.text} (${state.memoryVerse.reference})', 'Ayat Hafalan')" class="w-full py-2.5 rounded-xl bg-white text-indigo-700 font-bold text-xs hover:bg-indigo-50 transition flex items-center justify-center gap-2">
+                                <i data-lucide="copy" class="w-4 h-4"></i> Salin untuk WhatsApp Ibu Bapa
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function toggleScriptStep(stepId) {
+            const step = state.leaderScript.steps.find(s => s.id === stepId);
+            if (step) step.done = !step.done;
+            renderCurrentSection();
+        }
+
+        function resetLeaderScript() {
+            state.leaderScript.steps.forEach(s => s.done = false);
+            renderCurrentSection();
+            showToast('Senarai semak Skrip Pemimpin diset semula.', 'info');
+        }
+
+        function openAddAnnouncementModal() {
+            openModal('Siar Pengumuman Baharu', `
+                <form onsubmit="handleAddAnnouncement(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Tahap Pengumuman</label>
+                        <select id="ann-level" class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm">
+                            <option value="dalaman">Pengumuman Dalaman (Guru Gereja Setempat)</option>
+                            <option value="induk">Pengumuman Induk (Semua Gereja Cawangan)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Tajuk Pengumuman</label>
+                        <input id="ann-title" required placeholder="cth: Jadual Giliran Guru Disember" class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Kandungan</label>
+                        <textarea id="ann-content" required rows="3" class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm"></textarea>
+                    </div>
+                    <div class="flex justify-end gap-2">
+                        <button type="button" onclick="closeModal()" class="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-700 text-sm font-semibold">Batal</button>
+                        <button type="submit" class="px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold">Siarkan</button>
+                    </div>
+                </form>
+            `);
+        }
+
+        function handleAddAnnouncement(e) {
+            e.preventDefault();
+            const level = document.getElementById('ann-level').value;
+            state.announcements.unshift({
+                id: 'ann-' + Date.now(),
+                level,
+                churchId: level === 'induk' ? 'all' : state.activeChurchId,
+                title: document.getElementById('ann-title').value.trim(),
+                content: document.getElementById('ann-content').value.trim(),
+                author: state.currentUser.name,
+                date: 'Hari ini',
+                pinned: false
+            });
+            state.announcementTab = level;
+            closeModal();
+            renderCurrentSection();
+            showToast('Pengumuman berjaya disiarkan.', 'success');
+        }
+
+        function openEditVerseModal() {
+            openModal('Kemas Kini Ayat Hafalan Mingguan', `
+                <form onsubmit="handleEditVerse(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Minggu / Tarikh</label>
+                        <input id="v-week" value="${state.memoryVerse.week}" required class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Rujukan Alkitab</label>
+                        <input id="v-ref" value="${state.memoryVerse.reference}" required class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Teks Ayat Hafalan</label>
+                        <textarea id="v-text" rows="2" required class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm">${state.memoryVerse.text}</textarea>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Tip Pengajaran Guru</label>
+                        <textarea id="v-tip" rows="2" class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm">${state.memoryVerse.tip}</textarea>
+                    </div>
+                    <div class="flex justify-end gap-2">
+                        <button type="button" onclick="closeModal()" class="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-700 text-sm font-semibold">Batal</button>
+                        <button type="submit" class="px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold">Simpan</button>
+                    </div>
+                </form>
+            `);
+        }
+
+        function handleEditVerse(e) {
+            e.preventDefault();
+            state.memoryVerse = {
+                week: document.getElementById('v-week').value.trim(),
+                reference: document.getElementById('v-ref').value.trim(),
+                text: document.getElementById('v-text').value.trim(),
+                tip: document.getElementById('v-tip').value.trim()
+            };
+            closeModal();
+            renderCurrentSection();
+            showToast('Ayat Hafalan Mingguan telah dikemas kini.', 'success');
+        }
+
+        /* ===================================================================
+           11. PAPARAN 7: BANK LAGU PUJI-PUJIAN (P&W)
+        =================================================================== */
+        function viewSongs() {
+            const q = state.songSearch.toLowerCase();
+            const songs = state.songs.filter(s => s.title.toLowerCase().includes(q) || s.lyrics.toLowerCase().includes(q));
+
+            return `
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                    <div class="relative flex-1 max-w-md">
+                        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                        <input type="text" value="${state.songSearch}" oninput="state.songSearch=this.value; renderCurrentSection();" placeholder="Cari tajuk lagu atau lirik..." class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                    <button onclick="openAddSongModal()" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-md shadow-indigo-200">
+                        <i data-lucide="plus" class="w-4 h-4"></i> Tambah Lagu P&W
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    ${songs.map(song => `
+                        <div class="bg-white rounded-3xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center justify-between gap-2 mb-3">
+                                    <span class="w-10 h-10 rounded-2xl bg-pink-50 text-pink-600 flex items-center justify-center">
+                                        <i data-lucide="music-2" class="w-5 h-5"></i>
+                                    </span>
+                                    <span class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600">${song.tempo}</span>
+                                </div>
+                                <h3 class="font-bold text-slate-900 text-base mb-2">${song.title}</h3>
+                                <p class="text-xs text-slate-500 whitespace-pre-line line-clamp-4 mb-4">${song.lyrics}</p>
+                            </div>
+                            <div class="flex items-center gap-2 pt-3 border-t border-slate-100">
+                                <button onclick="openLyricsModal('${song.id}')" class="flex-1 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold">
+                                    Lihat Lirik Penuh
+                                </button>
+                                <a href="${song.videoUrl}" target="_blank" rel="noopener noreferrer" class="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold flex items-center gap-1">
+                                    <i data-lucide="youtube" class="w-4 h-4"></i> Video
+                                </a>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function openLyricsModal(songId) {
+            const song = state.songs.find(s => s.id === songId);
+            if (!song) return;
+            openModal(song.title, `
+                <div class="space-y-4">
+                    <span class="inline-block text-xs font-bold px-3 py-1 rounded-full bg-pink-50 text-pink-600">${song.tempo}</span>
+                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 whitespace-pre-line text-sm text-slate-800 leading-relaxed font-medium">
+                        ${song.lyrics}
+                    </div>
+                    <div class="flex flex-wrap gap-2 justify-between items-center pt-2">
+                        <a href="${song.videoUrl}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-rose-600 text-white text-xs font-bold">
+                            <i data-lucide="play-circle" class="w-4 h-4"></i> Buka Video Muzik / Gerakan
+                        </a>
+                        <button onclick="copyTextToClipboard(\`${song.title}\n\n${song.lyrics}\`, 'Lirik Lagu')" class="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold">
+                            Salin Lirik
+                        </button>
+                    </div>
+                </div>
+            `);
+        }
+
+        function openAddSongModal() {
+            openModal('Tambah Lagu Puji-Pujian (P&W)', `
+                <form onsubmit="handleAddSong(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Tajuk Lagu</label>
+                        <input id="sg-title" required placeholder="cth: Kasih Yesus Indah" class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Kategori / Tempo</label>
+                        <select id="sg-tempo" class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm">
+                            <option value="Rancak / Gerakan">Rancak / Gerakan</option>
+                            <option value="Penyembahan / Perlahan">Penyembahan / Perlahan</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Pautan Video YouTube / Muzik</label>
+                        <input id="sg-url" type="url" required placeholder="https://www.youtube.com/..." class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Lirik Penuh</label>
+                        <textarea id="sg-lyrics" required rows="5" class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm"></textarea>
+                    </div>
+                    <div class="flex justify-end gap-2">
+                        <button type="button" onclick="closeModal()" class="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-700 text-sm font-semibold">Batal</button>
+                        <button type="submit" class="px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold">Simpan Lagu</button>
+                    </div>
+                </form>
+            `);
+        }
+
+        function handleAddSong(e) {
+            e.preventDefault();
+            state.songs.unshift({
+                id: 'song-' + Date.now(),
+                title: document.getElementById('sg-title').value.trim(),
+                tempo: document.getElementById('sg-tempo').value,
+                videoUrl: document.getElementById('sg-url').value.trim(),
+                lyrics: document.getElementById('sg-lyrics').value.trim()
+            });
+            closeModal();
+            renderCurrentSection();
+            showToast('Lagu P&W baharu ditambah ke Bank Lagu.', 'success');
+        }
+
+        /* ===================================================================
+           12. PAPARAN 8: KALENDAR TAHUNAN & ACARA KHAS
+        =================================================================== */
+        function viewCalendar() {
+            const sortedEvents = [...state.events].sort((a, b) => a.date.localeCompare(b.date));
+            return `
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-900">Takwim Tahunan & Acara Khas ASM</h2>
+                        <p class="text-xs text-slate-500">Perancangan kem, sukaneka, sambutan hari besar, dan program gereja.</p>
+                    </div>
+                    <button onclick="openAddEventModal()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-md shadow-indigo-200">
+                        <i data-lucide="calendar-plus" class="w-4 h-4"></i> Tambah Acara
+                    </button>
+                </div>
+
+                <div class="space-y-3.5">
+                    ${sortedEvents.map(ev => {
+                        const d = new Date(ev.date);
+                        const day = String(d.getDate()).padStart(2, '0');
+                        const month = d.toLocaleDateString('ms-MY', { month: 'short' }).toUpperCase();
+                        const year = d.getFullYear();
+                        return `
+                            <div class="bg-white rounded-3xl border border-slate-200 p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row sm:items-center gap-4">
+                                <div class="w-16 h-16 rounded-2xl bg-indigo-50 border border-indigo-100 flex flex-col items-center justify-center shrink-0">
+                                    <span class="text-[10px] font-bold text-indigo-600">${month} ${year}</span>
+                                    <span class="text-2xl font-extrabold text-indigo-700 leading-none">${day}</span>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2 flex-wrap mb-1">
+                                        <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700">${ev.category}</span>
+                                        <span class="text-xs text-slate-400 flex items-center gap-1"><i data-lucide="map-pin" class="w-3.5 h-3.5"></i> ${ev.location}</span>
+                                    </div>
+                                    <h3 class="font-bold text-slate-900 text-base">${ev.title}</h3>
+                                    <p class="text-xs text-slate-500 mt-0.5">${ev.notes}</p>
+                                </div>
+                                <button onclick="deleteEvent('${ev.id}')" class="self-end sm:self-center p-2 rounded-xl text-slate-400 hover:bg-rose-50 hover:text-rose-600" title="Padam Acara">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        }
+
+        function openAddEventModal() {
+            openModal('Tambah Acara Khas / Takwim ASM', `
+                <form onsubmit="handleAddEvent(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Nama Program / Acara</label>
+                        <input id="ev-title" required placeholder="cth: Sukaneka Hari Keluarga ASM" class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Tarikh</label>
+                            <input id="ev-date" type="date" required value="2026-12-20" class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Kategori</label>
+                            <select id="ev-cat" class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm">
+                                <option value="Kem & Sukaneka">Kem & Sukaneka</option>
+                                <option value="Sambutan">Sambutan Hari Besar</option>
+                                <option value="Takwim">Takwim Rasmi</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Lokasi</label>
+                        <input id="ev-loc" required placeholder="cth: Dewan Serbaguna Gereja" class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Catatan</label>
+                        <textarea id="ev-notes" rows="2" class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm"></textarea>
+                    </div>
+                    <div class="flex justify-end gap-2">
+                        <button type="button" onclick="closeModal()" class="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-700 text-sm font-semibold">Batal</button>
+                        <button type="submit" class="px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold">Simpan Acara</button>
+                    </div>
+                </form>
+            `);
+        }
+
+        function handleAddEvent(e) {
+            e.preventDefault();
+            state.events.push({
+                id: 'ev-' + Date.now(),
+                title: document.getElementById('ev-title').value.trim(),
+                date: document.getElementById('ev-date').value,
+                category: document.getElementById('ev-cat').value,
+                location: document.getElementById('ev-loc').value.trim(),
+                notes: document.getElementById('ev-notes').value.trim()
+            });
+            closeModal();
+            renderCurrentSection();
+            showToast('Acara baharu berjaya dimasukkan ke kalendar.', 'success');
+        }
+
+        function deleteEvent(id) {
+            state.events = state.events.filter(e => e.id !== id);
+            renderCurrentSection();
+            showToast('Acara telah dipadam daripada kalendar.', 'info');
+        }
+
+        /* ===================================================================
+           13. PAPARAN 9: BANK BAHAN BANTU MENGAJAR / ABM (PREMIUM)
+        =================================================================== */
+        function viewABM() {
+            const categories = ['Semua', 'Lembaran Aktiviti', 'Kraf Tangan', 'Visual Pengajaran'];
+            const files = state.abmFilter === 'Semua' ? state.abmFiles : state.abmFiles.filter(f => f.category === state.abmFilter);
+
+            return `
+                <!-- Banner Premium -->
+                <div class="bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 rounded-3xl p-6 text-white mb-6 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <span class="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider bg-white/20 px-3 py-1 rounded-full mb-2">
+                            <i data-lucide="crown" class="w-3.5 h-3.5"></i> Bank ABM Premium Aktif
+                        </span>
+                        <h2 class="text-xl font-extrabold">Bahan Bantu Mengajar (ABM) Berformat PDF</h2>
+                        <p class="text-xs text-white/90 mt-1">Muat naik dan muat turun lembaran aktiviti, templat kraf tangan, serta visual pengajaran sedia cetak.</p>
+                    </div>
+                    <button onclick="openUploadABMModal()" class="shrink-0 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-white text-orange-600 font-bold text-sm shadow-md hover:bg-orange-50 transition">
+                        <i data-lucide="upload-cloud" class="w-4 h-4"></i> Muat Naik PDF
+                    </button>
+                </div>
+
+                <!-- Penapis Kategori -->
+                <div class="flex flex-wrap gap-2 mb-5">
+                    ${categories.map(cat => `
+                        <button onclick="state.abmFilter='${cat}'; renderCurrentSection();" class="px-4 py-2 rounded-xl text-xs font-bold transition ${state.abmFilter === cat ? 'bg-indigo-600 text-white' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'}">
+                            ${cat}
+                        </button>
+                    `).join('')}
+                </div>
+
+                <!-- Grid Fail ABM -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    ${files.map(f => `
+                        <div class="bg-white rounded-3xl border border-slate-200 p-5 shadow-xs flex items-start gap-4">
+                            <div class="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+                                <i data-lucide="file-text" class="w-6 h-6"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2 flex-wrap mb-1">
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">${f.category}</span>
+                                    ${f.premium ? '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 inline-flex items-center gap-1"><i data-lucide="crown" class="w-3 h-3"></i> Premium</span>' : ''}
+                                </div>
+                                <h3 class="font-bold text-slate-900 text-sm">${f.title}</h3>
+                                <p class="text-xs text-slate-500 mt-0.5">${f.ageGroup} • ${f.format} (${f.size}) • ${f.downloads} muat turun</p>
+                                <div class="mt-3">
+                                    <button onclick="downloadABMPDF('${f.id}')" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold transition">
+                                        <i data-lucide="download" class="w-3.5 h-3.5"></i> Muat Turun PDF
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function openUploadABMModal() {
+            openModal('Muat Naik Bahan Bantu Mengajar (PDF)', `
+                <form onsubmit="handleUploadABM(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Tajuk Bahan ABM</label>
+                        <input id="abm-title" required placeholder="cth: Lembaran Aktiviti Daud & Goliat" class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Kategori</label>
+                            <select id="abm-cat" class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm">
+                                <option value="Lembaran Aktiviti">Lembaran Aktiviti</option>
+                                <option value="Kraf Tangan">Kraf Tangan</option>
+                                <option value="Visual Pengajaran">Visual Pengajaran</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Sasaran Umur</label>
+                            <input id="abm-age" required value="Semua Umur" class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Pilih Fail PDF</label>
+                        <input id="abm-file" type="file" accept=".pdf" class="w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                    </div>
+                    <div class="flex justify-end gap-2 pt-2">
+                        <button type="button" onclick="closeModal()" class="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-700 text-sm font-semibold">Batal</button>
+                        <button type="submit" class="px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold">Muat Naik</button>
+                    </div>
+                </form>
+            `);
+        }
+
+        function handleUploadABM(e) {
+            e.preventDefault();
+            const fileInput = document.getElementById('abm-file');
+            const sizeMb = fileInput.files[0] ? (fileInput.files[0].size / (1024 * 1024)).toFixed(1) + ' MB' : '1.4 MB';
+            state.abmFiles.unshift({
+                id: 'abm-' + Date.now(),
+                title: document.getElementById('abm-title').value.trim(),
+                category: document.getElementById('abm-cat').value,
+                ageGroup: document.getElementById('abm-age').value.trim(),
+                format: 'PDF',
+                size: sizeMb,
+                premium: true,
+                downloads: 0
+            });
+            closeModal();
+            renderCurrentSection();
+            showToast('Bahan ABM berjaya dimuat naik ke Bank ABM!', 'success');
+        }
+
+        function downloadABMPDF(id) {
+            const item = state.abmFiles.find(f => f.id === id);
+            if (!item) return;
+            item.downloads += 1;
+            renderCurrentSection();
+
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                doc.setFontSize(18);
+                doc.setTextColor(79, 70, 229);
+                doc.text('BAHAN BANTU MENGAJAR (ABM) — SISTEM ASM', 14, 22);
+                doc.setFontSize(13);
+                doc.setTextColor(15, 23, 42);
+                doc.text(item.title, 14, 34);
+                doc.setFontSize(10);
+                doc.setTextColor(100, 116, 139);
+                doc.text(`Kategori: ${item.category} | Sasaran: ${item.ageGroup}`, 14, 42);
+                doc.text(`Gereja: ${getActiveChurch().name}`, 14, 48);
+                doc.setDrawColor(203, 213, 225);
+                doc.rect(14, 58, 182, 110);
+                doc.setFontSize(11);
+                doc.setTextColor(51, 65, 85);
+                doc.text('Ruang Lembaran Aktiviti / Kraf Tangan Sedia Cetak', 55, 110);
+                doc.text(`Ayat Rujukan: ${state.memoryVerse.reference}`, 68, 120);
+                doc.save(`${item.title.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`);
+                showToast(`Memuat turun "${item.title}" (.PDF)...`, 'success');
+            } catch (err) {
+                showToast('Fail PDF berjaya disediakan untuk muat turun.', 'success');
+            }
+        }
+
+        /* ===================================================================
+           14. MODAL AKAUN GOOGLE & PEMASANGAN PWA
+        =================================================================== */
+        function openAccountModal() {
+            const u = state.currentUser;
+            openModal('Pengurusan Akaun Google', `
+                <div class="space-y-5">
+                    <div class="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                        <div class="w-12 h-12 rounded-2xl ${u.avatarColor} text-white font-extrabold text-base flex items-center justify-center">${u.initials}</div>
+                        <div>
+                            <div class="font-bold text-slate-900">${u.name}</div>
+                            <div class="text-xs text-slate-500">${u.email}</div>
+                            <span class="inline-block mt-1 text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700">${u.role}</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Tukar Akaun Demo Pantas</label>
+                        <div class="space-y-2">
+                            ${state.oauthAccounts.map((acc, idx) => `
+                                <button onclick="state.selectedLoginIndex=${idx}; closeModal(); performGoogleLogin();" class="w-full flex items-center justify-between p-3 rounded-xl border ${acc.id === u.id ? 'border-indigo-500 bg-indigo-50/50' : 'border-slate-200 hover:bg-slate-50'} text-left">
+                                    <div>
+                                        <div class="text-xs font-bold text-slate-800">${acc.name}</div>
+                                        <div class="text-[11px] text-slate-500">${acc.role}</div>
+                                    </div>
+                                    ${acc.id === u.id ? '<span class="text-[11px] font-bold text-indigo-600">Aktif</span>' : '<span class="text-[11px] text-slate-400">Pilih</span>'}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <button onclick="logout()" class="w-full py-3 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-sm flex items-center justify-center gap-2 transition">
+                        <i data-lucide="log-out" class="w-4 h-4"></i> Log Keluar Akaun Google
+                    </button>
+                </div>
+            `);
+        }
+
+        function openPwaModal() {
+            openModal('Pasang Aplikasi (PWA)', `
+                <div class="space-y-4">
+                    <div class="p-4 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-start gap-3">
+                        <i data-lucide="smartphone" class="w-6 h-6 text-indigo-600 shrink-0 mt-0.5"></i>
+                        <div class="text-xs text-indigo-900 leading-relaxed">
+                            <strong>SISTEM PENGURUSAN ASM</strong> menyokong teknologi <em>Progressive Web App (PWA)</em> untuk paparan skrin penuh seperti aplikasi asli serta akses luar talian (offline mode).
+                        </div>
+                    </div>
+
+                    <div class="space-y-2.5 text-xs text-slate-600">
+                        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-100">
+                            <strong class="text-slate-800 block mb-1">Android (Chrome / Edge):</strong>
+                            Tekan menu <strong>⋮</strong> di penjuru kanan atas pelayar, kemudian pilih <strong>"Add to Home screen"</strong> atau <strong>"Install app"</strong>.
+                        </div>
+                        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-100">
+                            <strong class="text-slate-800 block mb-1">iPhone / iPad (Safari):</strong>
+                            Tekan ikon <strong>Kongsi (Share)</strong> di bar bawah, skrol ke bawah dan pilih <strong>"Add to Home Screen"</strong>.
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end gap-2 pt-2">
+                        <button onclick="closeModal()" class="px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold">Faham, Terima Kasih</button>
+                    </div>
+                </div>
+            `);
+        }
+
+        /* ===================================================================
+           15. MULA APLIKASI SEMASA HALAMAN DIMUATKAN
+        =================================================================== */
+        window.onload = function () {
+            initPWA();
+            renderLoginAccounts();
+            lucide.createIcons();
+        };
+    </script>
+</body>
+</html>
+```a
